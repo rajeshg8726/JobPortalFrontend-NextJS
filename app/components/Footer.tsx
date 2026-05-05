@@ -57,8 +57,8 @@ export default function Footer() {
     company: [
       { name: "About Us", path: "/about", upcoming: false },
       { name: "Contact", path: "/contact", upcoming: false },
-      { name: "Privacy Policy", path: "/coming-soon", upcoming: true },
-      { name: "Terms of Service", path: "/coming-soon", upcoming: true },
+      { name: "Privacy Policy", path: "/privacy", upcoming: false },
+      { name: "Terms of Service", path: "/terms", upcoming: false },
       { name: "FAQ", path: "/coming-soon", upcoming: true },
     ],
   };

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Sora, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import PublicShell from "./components/PublicShell";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
         <PublicShell>
           {children}
         </PublicShell>
+        <Analytics />
       </body>
     </html>
   );
