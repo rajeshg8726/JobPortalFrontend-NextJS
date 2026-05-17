@@ -39,7 +39,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sora bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sora bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         <PublicShell>
           {children}
         </PublicShell>

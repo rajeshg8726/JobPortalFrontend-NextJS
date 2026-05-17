@@ -5,15 +5,20 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Bookmark, Eye, TrendingUp, ChevronRight, Building2,
-  MapPin, Clock, ExternalLink, Briefcase,
+  MapPin, Clock, ExternalLink, Briefcase, Sparkles
 } from 'lucide-react';
 
 function calcCompletion(profile: any): number {
   if (!profile) return 0;
   const checks = [
-    !!profile.fullName, !!profile.email, !!profile.phone,
-    !!profile.location, !!profile.bio,
+    !!(profile.full_name),
+    !!profile.phone,
+    !!profile.location,
+    !!profile.bio,
+    !!profile.is_pro,
     !!(Array.isArray(profile.skills) ? profile.skills.length > 0 : !!profile.skills),
+    !!profile.profile_image,
+    !!profile.resume,
   ];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
@@ -37,7 +42,7 @@ export default function CandidateDashboardPage() {
   }, []);
 
   const completion = calcCompletion(profile);
-  const firstName = profile?.fullName?.split(' ')[0] || 'there';
+  const firstName = profile?.full_name?.split(' ')[0] || 'there';
 
   const stats = [
     {
@@ -77,8 +82,20 @@ export default function CandidateDashboardPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl md:text-4xl font-black text-slate-100 font-playfair tracking-tight mb-1.5">
+        <h1 className="text-3xl md:text-4xl font-black text-slate-100 font-playfair tracking-tight mb-1.5 flex flex-wrap items-center gap-3">
           Welcome back, {firstName}! 👋
+          {profile?.is_pro ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 text-[13px] font-black uppercase tracking-widest rounded-full shadow-sm align-middle mt-1 md:mt-0">
+              <Sparkles className="w-4 h-4" /> PRO Member
+            </span>
+          ) : (
+            <Link 
+              href="/pro"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-[13px] font-black uppercase tracking-widest rounded-full shadow-sm align-middle mt-1 md:mt-0 transition-colors cursor-pointer group"
+            >
+              BASIC Member <span className="text-[10px] text-blue-600 font-bold group-hover:translate-x-0.5 transition-transform ml-1">Upgrade ⚡</span>
+            </Link>
+          )}
         </h1>
         <p className="text-[15px] font-medium text-slate-500">
           Here's your job search activity at a glance.
@@ -201,24 +218,51 @@ export default function CandidateDashboardPage() {
       </div>
 
       {/* CTA Banner */}
-      <div className="relative bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 rounded-[2rem] p-8 md:p-10 text-white overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h3 className="text-2xl font-black mb-2 font-playfair">Ready for your next opportunity?</h3>
-            <p className="text-blue-200 font-medium text-[15px]">
-              Explore thousands of fresh job listings curated just for you.
-            </p>
+      {!profile?.is_pro ? (
+        <div className="relative bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 rounded-[2rem] p-8 md:p-10 text-white overflow-hidden shadow-2xl">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-300 text-xs font-bold uppercase tracking-widest mb-3 border border-blue-500/30">
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Unlock Premium
+              </div>
+              <h3 className="text-2xl font-black mb-2 font-playfair">Upgrade to PRO Status</h3>
+              <p className="text-blue-200/80 font-medium text-[15px] max-w-xl">
+                Get unlimited AI resume matches, tailored cover letters, and bypass ATS filters to land your dream job faster.
+              </p>
+            </div>
+            <Link
+              href="/pro"
+              className="px-7 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-black hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap text-[14px] text-center shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+            >
+              Upgrade Now
+            </Link>
           </div>
-          <Link
-            href="/jobs"
-            className="px-7 py-3.5 bg-white text-slate-900 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap text-[14px] text-center"
-          >
-            Browse Jobs →
-          </Link>
+          <div className="absolute right-0 top-0 w-72 h-72 bg-blue-500 opacity-20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-indigo-400 opacity-20 rounded-full blur-3xl pointer-events-none" />
         </div>
-        <div className="absolute right-0 top-0 w-72 h-72 bg-blue-500 opacity-10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-indigo-400 opacity-10 rounded-full blur-3xl pointer-events-none" />
-      </div>
+      ) : (
+        <div className="relative bg-gradient-to-r from-slate-900 via-emerald-950 to-teal-900 rounded-[2rem] p-8 md:p-10 text-white overflow-hidden shadow-2xl">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-300 text-xs font-bold uppercase tracking-widest mb-3 border border-emerald-500/30">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> PRO Active
+              </div>
+              <h3 className="text-2xl font-black mb-2 font-playfair">Ready for your next opportunity?</h3>
+              <p className="text-emerald-100/80 font-medium text-[15px] max-w-xl">
+                Your profile is boosted. Explore thousands of fresh premium job listings curated just for you.
+              </p>
+            </div>
+            <Link
+              href="/jobs"
+              className="px-7 py-3.5 bg-white text-slate-900 rounded-xl font-black hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap text-[14px] text-center"
+            >
+              Browse Premium Jobs →
+            </Link>
+          </div>
+          <div className="absolute right-0 top-0 w-72 h-72 bg-emerald-500 opacity-10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-teal-400 opacity-10 rounded-full blur-3xl pointer-events-none" />
+        </div>
+      )}
 
     </div>
   );

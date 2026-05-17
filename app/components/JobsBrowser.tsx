@@ -219,11 +219,22 @@ export default function JobsBrowser(props: JobsBrowserProps) {
   const formatDate = (dateString: string) => {
     if (!dateString) return "Recently";
     const date = new Date(dateString);
-    const diffTime = Math.abs(new Date().getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMinutes = Math.floor(diffTime / (1000 * 60));
+        return diffMinutes <= 1 ? "Just now" : `${diffMinutes}m ago`;
+      }
+      return `${diffHours}h ago`;
+    }
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays}d ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -277,6 +288,45 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                   </button>
                 )}
              </div>
+          </div>
+        </div>
+        {/* AI Marketing Banner (Transparent UX) */}
+        <div className="relative bg-gradient-to-r from-slate-950 via-blue-950 to-purple-950 rounded-3xl p-8 mb-10 overflow-hidden border border-white/10 shadow-2xl">
+          {/* Background glow effects */}
+          <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full bg-purple-500/20 blur-[80px] pointer-events-none" />
+          <div className="absolute bottom-[-50%] left-[-10%] w-[200px] h-[200px] rounded-full bg-blue-500/20 blur-[60px] pointer-events-none" />
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-left flex-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-purple-300 text-xs font-bold uppercase tracking-widest mb-4">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" /> AI-Powered Platform
+              </div>
+              <h3 className="text-2xl md:text-3xl font-black text-white font-playfair tracking-tight leading-tight mb-3">
+                Stop guessing. Beat the ATS robot.
+              </h3>
+              <p className="text-slate-300 font-medium leading-relaxed max-w-xl text-[15px] mb-5">
+                Every new user gets <span className="text-emerald-400 font-bold">6 Free AI Credits</span> to analyze jobs instantly. 
+                We extract missing keywords from your resume and generate highly personalized cover letters to 10x your hiring chances.
+              </p>
+              <Link 
+                href="/pro" 
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-400 hover:to-blue-400 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-[0_4px_15px_rgba(139,92,246,0.3)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 text-sm"
+              >
+                Unlock Unlimited PRO Access <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            
+            <div className="shrink-0 flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+              <div className="text-center">
+                <div className="text-3xl font-black text-white">6</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Free Matches</div>
+              </div>
+              <div className="w-px h-12 bg-white/10" />
+              <div className="text-center">
+                <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400">100%</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Transparency</div>
+              </div>
+            </div>
           </div>
         </div>
 

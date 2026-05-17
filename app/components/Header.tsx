@@ -181,15 +181,15 @@ export default function Header() {
                   className="flex items-center gap-3 p-1.5 pr-4 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all bg-white dark:bg-slate-900"
                 >
                   <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden">
-                    {userProfile?.profileImage ? (
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL}/${userProfile.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
+                    {userProfile?.profile_image ? (
+                      <img src={`${process.env.NEXT_PUBLIC_API_URL}/${userProfile.profile_image}`} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       <User className="w-4 h-4" />
                     )}
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="text-[13px] font-bold text-slate-900 dark:text-white leading-none">
-                      {userProfile?.fullName || userProfile?.companyName || "User"}
+                      {userProfile?.full_name || userProfile?.companyName || "User"}
                     </span>
                     <span className="text-[11px] text-slate-500 font-medium mt-1 uppercase tracking-wider">
                       {localStorage.getItem("userType")}
@@ -274,15 +274,15 @@ export default function Header() {
                 {isAuthenticated && userProfile ? (
                   <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
                     <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold overflow-hidden border-2 border-white dark:border-slate-800">
-                      {userProfile.profileImage ? (
-                        <img src={`${process.env.NEXT_PUBLIC_API_URL}/${userProfile.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
+                      {userProfile.profile_image ? (
+                        <img src={`${process.env.NEXT_PUBLIC_API_URL}/${userProfile.profile_image}`} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         <User className="w-5 h-5" />
                       )}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-900 dark:text-white">
-                        {userProfile.fullName || userProfile.companyName || "User"}
+                        {userProfile.full_name || userProfile.companyName || "User"}
                       </span>
                       <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
                         {localStorage.getItem("userType")}

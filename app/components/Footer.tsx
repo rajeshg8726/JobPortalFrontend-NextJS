@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Mail,
@@ -20,6 +20,17 @@ export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [candidatePath, setCandidatePath] = useState('/login');
+  const [savedJobsPath, setSavedJobsPath] = useState('/login');
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const userType = typeof window !== 'undefined' ? localStorage.getItem('userType') : null;
+    if (token && userType === 'Candidate') {
+      setCandidatePath('/candidate-dashboard');
+      setSavedJobsPath('/candidate-dashboard/saved-jobs');
+    }
+  }, []);
 
   const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const contactEmail = "rgjobsupdate@gmail.com";
@@ -40,6 +51,7 @@ export default function Footer() {
       { name: "Browse Companies", path: "/companies", upcoming: false },
       { name: "Candidate Dashboard", path: "/login", upcoming: false },
       { name: "Saved Jobs", path: "/login", upcoming: false },
+      { name: "⚡ PRO Membership", path: "/pro", upcoming: false, highlight: true },
     ],
     employers: [
       { name: "Post Jobs", path: "/post-jobs", upcoming: false },
@@ -134,10 +146,24 @@ export default function Footer() {
           <div className="flex flex-col gap-5">
             <h3 className="text-white font-bold text-base uppercase tracking-wider">Candidates</h3>
             <ul className="flex flex-col gap-3">
-              {quickLinks.candidates.map((link) => (
+              {quickLinks.candidates.map((link: any) => (
                 <li key={link.name}>
-                  <Link href={link.path} className={`text-sm font-medium transition-colors flex items-center gap-2 group ${link.upcoming ? 'text-slate-500 hover:text-slate-400 cursor-not-allowed' : 'text-slate-400 hover:text-blue-400'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full transition-all ${link.upcoming ? 'bg-slate-700' : 'bg-blue-500/0 group-hover:bg-blue-400'}`} />
+                  <Link href={
+                    link.name === "Candidate Dashboard" 
+                      ? candidatePath 
+                      : link.name === "Saved Jobs" 
+                        ? savedJobsPath 
+                        : link.path
+                  } className={`text-sm font-medium transition-colors flex items-center gap-2 group ${
+                    link.highlight 
+                      ? 'text-amber-400 hover:text-amber-300 font-bold' 
+                      : link.upcoming 
+                        ? 'text-slate-500 hover:text-slate-400 cursor-not-allowed' 
+                        : 'text-slate-400 hover:text-blue-400'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      link.highlight ? 'bg-amber-400' : link.upcoming ? 'bg-slate-700' : 'bg-blue-500/0 group-hover:bg-blue-400'
+                    }`} />
                     {link.name}
                     {link.upcoming && <span className="text-[9px] uppercase font-bold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md ml-1 border border-slate-700">Soon</span>}
                   </Link>

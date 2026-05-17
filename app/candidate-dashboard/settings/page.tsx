@@ -10,7 +10,7 @@ import {
 export default function ProfileSettingsPage() {
   const [profile, setProfile] = useState<any>(null);
   const [form, setForm] = useState({
-    fullName: '',
+    full_name: '',
     phone: '',
     location: '',
     bio: '',
@@ -42,7 +42,7 @@ export default function ProfileSettingsPage() {
   const applyProfile = (p: any) => {
     setProfile(p);
     setForm({
-      fullName: p.name || p.fullName || '',
+      full_name: p.full_name || '',
       phone: p.phone || '',
       location: p.location || '',
       bio: p.bio || '',
@@ -79,7 +79,7 @@ export default function ProfileSettingsPage() {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({ ...form }),
+        body: JSON.stringify({ ...form, name: form.full_name }),
       });
       const data = await res.json();
       if (data.success) {
@@ -216,7 +216,7 @@ export default function ProfileSettingsPage() {
               />
             ) : (
               <span className="text-2xl font-black text-white select-none">
-                {(form.fullName || profile?.name || profile?.fullName || 'U').charAt(0).toUpperCase()}
+                {(form.full_name || profile?.full_name || 'U').charAt(0).toUpperCase()}
               </span>
             )}
           </div>
@@ -260,8 +260,8 @@ export default function ProfileSettingsPage() {
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                value={form.fullName}
-                onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))}
+                value={form.full_name}
+                onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
                 placeholder="Your full name"
                 className={`${inputCls} pl-10 pr-4`}
               />

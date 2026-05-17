@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Bookmark, User, LogOut, ChevronRight, MapPin } from 'lucide-react';
+import { LayoutDashboard, Bookmark, User, LogOut, ChevronRight, MapPin, Sparkles } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Overview', href: '/candidate-dashboard', exact: true, icon: LayoutDashboard },
@@ -15,12 +15,13 @@ const NAV_ITEMS = [
 function calcCompletion(profile: any): number {
   if (!profile) return 0;
   const checks = [
-    !!(profile.name || profile.fullName),
-    !!profile.email,
+    !!(profile.full_name),
     !!profile.phone,
     !!profile.location,
     !!profile.bio,
     !!(Array.isArray(profile.skills) ? profile.skills.length > 0 : !!profile.skills),
+    !!profile.profile_image,
+    !!profile.resume,
   ];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
@@ -100,14 +101,26 @@ export default function CandidateDashboardLayout({ children }: { children: React
                     />
                   ) : (
                     <span className="text-2xl font-black text-white select-none">
-                      {(profile?.name || profile?.fullName || 'U').charAt(0).toUpperCase()}
+                      {(profile?.full_name || 'U').charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
 
-                <h2 className="text-[17px] font-black text-slate-900 leading-tight">
-                  {profile?.name || profile?.fullName || 'Candidate'}
-                </h2>
+                <div className="flex items-center gap-2 mt-2">
+                  <h2 className="text-[17px] font-black text-slate-900 leading-tight">
+                    {profile?.full_name || 'Candidate'}
+                  </h2>
+                  {profile?.is_pro ? (
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-md">
+                      <Sparkles className="w-3 h-3" /> PRO
+                    </span>
+                  ) : (
+                    <Link href="/pro" className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-slate-200 transition-colors shadow-sm cursor-pointer">
+                      BASIC
+                    </Link>
+                  )}
+                  
+                </div>
                 <p className="text-[12px] text-slate-500 font-medium mt-0.5">{profile?.email}</p>
                 {profile?.location && (
                   <p className="flex items-center gap-1 text-[11px] text-slate-400 font-medium mt-1">

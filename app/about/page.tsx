@@ -55,16 +55,16 @@ export default function AboutPage() {
             className="w-full bg-white rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.06)] border border-slate-200 p-10 md:p-14 grid grid-cols-1 md:grid-cols-3 gap-10 divide-y md:divide-y-0 md:divide-x divide-slate-100"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="text-4xl md:text-5xl font-black text-slate-900 mb-2">1k+</div>
-              <div className="text-[15px] font-bold text-slate-500 uppercase tracking-wide">Jobs Posted</div>
+              <div className="text-4xl md:text-5xl font-black text-slate-900 mb-2">1,000+</div>
+              <div className="text-[15px] font-bold text-slate-500 uppercase tracking-wide">Jobs Curated</div>
             </div>
             <div className="flex flex-col items-center text-center pt-8 md:pt-0">
-              <div className="text-4xl md:text-5xl font-black text-blue-600 mb-2">Planning to expand</div>
-              <div className="text-[15px] font-bold text-slate-500 uppercase tracking-wide">Partner Companies</div>
+              <div className="text-4xl md:text-5xl font-black text-blue-600 mb-2">100+</div>
+              <div className="text-[15px] font-bold text-slate-500 uppercase tracking-wide">Companies Listed</div>
             </div>
             <div className="flex flex-col items-center text-center pt-8 md:pt-0">
-              <div className="text-4xl md:text-5xl font-black text-slate-900 mb-2">10k+</div>
-              <div className="text-[15px] font-bold text-slate-500 uppercase tracking-wide">Active Users</div>
+              <div className="text-4xl md:text-5xl font-black text-slate-900 mb-2">Free</div>
+              <div className="text-[15px] font-bold text-slate-500 uppercase tracking-wide">To Browse Always</div>
             </div>
           </motion.div>
         </section>
@@ -75,12 +75,12 @@ export default function AboutPage() {
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 font-playfair leading-tight">
               A platform engineered for excellence.
             </h2>
-            <p className="text-slate-600 text-[17px] leading-relaxed mb-6 font-medium">
-              We believe that hiring shouldn't be a tedious process of sifting through noise. At RGJobs, we utilize smart filtering, stunning interfaces, and rigorous vetting to ensure high signal-to-noise ratios.
-            </p>
-            <p className="text-slate-600 text-[17px] leading-relaxed mb-10 font-medium">
-              Whether you are a startup scaling your engineering team, or a Fortune 500 company looking for executives, our platform elegantly scales to your demands.
-            </p>
+              <p className="text-slate-600 text-[17px] leading-relaxed mb-6 font-medium">
+                We believe job hunting shouldn't mean drowning in noise. At RGJobs, we curate and aggregate real job listings directly from company career pages — so you see clean, verified opportunities all in one place.
+              </p>
+              <p className="text-slate-600 text-[17px] leading-relaxed mb-10 font-medium">
+                We are 100% transparent: all jobs on RGJobs are sourced from external companies like Amazon, Google, and others. When you click Apply, you land directly on their official site — we never collect your application data.
+              </p>
             <div className="flex gap-4">
               <div className="flex items-center gap-2 font-bold text-slate-900 bg-white border border-slate-200 px-5 py-3 rounded-xl shadow-sm">
                 <Globe className="w-5 h-5 text-blue-600" /> Global Reach
