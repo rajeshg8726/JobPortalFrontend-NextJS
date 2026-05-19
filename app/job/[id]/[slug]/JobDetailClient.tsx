@@ -327,12 +327,12 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       const lineHeight = 7;
       const paragraphSpacing = 10;
       
-      paragraphs.forEach(para => {
+      paragraphs.forEach((para: string) => {
         const text = para.trim();
         if (text) {
           // splitTextToSize wraps text to fit within maxLineWidth
           const lines = doc.splitTextToSize(text, maxLineWidth);
-          lines.forEach(line => {
+          lines.forEach((line: string) => {
             if (y > 260) { // A4 height is 297mm
               doc.addPage();
               y = 30; // reset y on new page
