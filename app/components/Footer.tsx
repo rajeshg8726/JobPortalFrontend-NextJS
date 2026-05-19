@@ -71,6 +71,7 @@ export default function Footer() {
       { name: "Contact", path: "/contact", upcoming: false },
       { name: "Privacy Policy", path: "/privacy", upcoming: false },
       { name: "Terms of Service", path: "/terms", upcoming: false },
+      { name: "Refund & Cancellation Policy", path: "/refund-policy", upcoming: false },
       { name: "FAQ", path: "/coming-soon", upcoming: true },
     ],
   };
@@ -244,6 +245,7 @@ export default function Footer() {
             <Link href="/about" className="text-sm text-slate-500 hover:text-white transition-colors">About Us</Link>
             <Link href="/privacy" className="text-sm text-slate-500 hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="text-sm text-slate-500 hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/refund-policy" className="text-sm text-slate-500 hover:text-white transition-colors">Refund & Cancellation Policy</Link>
           </div>
         </div>
 

@@ -27,6 +27,9 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "RGJobs - Find Your Dream Job",
   description: "Find your dream job",
+  verification: {
+    google: "cMXxHXt8iDBLnyGweMvFDeotRL46bZ5KIVkFUEA2Mew",
+  },
 };
 
 export default function RootLayout({

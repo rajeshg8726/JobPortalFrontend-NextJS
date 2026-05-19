@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
@@ -37,7 +37,8 @@ import {
   Download,
   FileDown,
   UserRoundPen,
-  FileCheck
+  FileCheck,
+  RefreshCw
 } from 'lucide-react';
 
 const Toast = ({ message, type, onClose }: any) => {
@@ -65,6 +66,8 @@ const Toast = ({ message, type, onClose }: any) => {
 
 export default function JobDetailClient({ id, slug, initialJob }: { id: string, slug: string, initialJob?: any }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoAnalyze = searchParams.get('autoAnalyze');
   const [job, setJob] = useState<any>(initialJob || null);
   const [loading, setLoading] = useState<boolean>(!initialJob);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +88,8 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [optimizedProfile, setOptimizedProfile] = useState<string | null>(null);
   const [showOptimizerModal, setShowOptimizerModal] = useState(false);
+  const [showProfileAlert, setShowProfileAlert] = useState(false);
+  const [profileCompletion, setProfileCompletion] = useState<number>(0);
 
   const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -192,7 +197,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
     });
   };
 
-  const calculateAIMatch = async () => {
+  const calculateAIMatch = async (skipProfileCheck?: boolean | any, forceRefresh: boolean = false) => {
     const token = localStorage.getItem('token');
     const userType = localStorage.getItem('userType');
     
@@ -201,11 +206,36 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       return;
     }
 
+    if (skipProfileCheck !== true) {
+      const userStr = localStorage.getItem('candidate');
+      if (userStr) {
+        try {
+          const profile = JSON.parse(userStr);
+          const checks = [
+            !!(profile.full_name),
+            !!profile.phone,
+            !!profile.location,
+            !!profile.bio,
+            !!profile.is_pro,
+            !!(Array.isArray(profile.skills) ? profile.skills.length > 0 : !!profile.skills),
+            !!profile.profile_image,
+            !!profile.resume,
+          ];
+          const comp = Math.round((checks.filter(Boolean).length / checks.length) * 100);
+          if (comp < 90) {
+            setProfileCompletion(comp);
+            setShowProfileAlert(true);
+            return;
+          }
+        } catch(e) {}
+      }
+    }
+
     setMatchLoading(true);
     try {
       const response = await axios.post(
         `${backendURL}/api/candidate/generate-match`,
-        { job_id: id },
+        { job_id: id, force_refresh: forceRefresh },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -250,6 +280,15 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       setMatchLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (autoAnalyze === 'true') {
+      const timer = setTimeout(() => {
+        calculateAIMatch(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoAnalyze]);
 
   const downloadAsPDF = async () => {
     if (!coverLetter) return;
@@ -751,6 +790,21 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                           </div>
                         </div>
                       )}
+                      
+                      {/* Refresh Button */}
+                      <div className="w-full mt-6 pt-6 border-t border-slate-800">
+                        <button
+                          onClick={() => calculateAIMatch(true, true)}
+                          disabled={matchLoading}
+                          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-xl font-semibold text-[13px] transition-all disabled:opacity-50"
+                        >
+                          {matchLoading ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-white animate-spin" />
+                          ) : (
+                            <><RefreshCw className="w-4 h-4" /> Updated Profile? Re-Analyze</>
+                          )}
+                        </button>
+                      </div>
                     </motion.div>
                   ) : (
                     <>
@@ -858,6 +912,50 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                   className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors shadow-lg shadow-blue-500/25"
                 >
                   Go to Login
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Incomplete Profile Alert Modal */}
+      <AnimatePresence>
+        {showProfileAlert && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full shadow-2xl relative"
+            >
+              <button onClick={() => setShowProfileAlert(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+              <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <AlertCircle className="w-8 h-8 text-amber-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3">Incomplete Profile</h3>
+              <p className="text-slate-400 mb-6 leading-relaxed">
+                Your profile is only <strong>{profileCompletion}% complete</strong>. The AI Engine requires a highly detailed profile (Bio, Skills, Location, etc.) to give you the best ATS Match Score and Resume optimizations. 
+                <br /><br />
+                If you proceed now, you might waste a credit on poor results. We highly recommend completing your profile first.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => {
+                    setShowProfileAlert(false);
+                    calculateAIMatch(true);
+                  }}
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-700 text-slate-300 font-medium hover:bg-slate-800 transition-colors text-[14px]"
+                >
+                  Proceed Anyway
+                </button>
+                <button 
+                  onClick={() => router.push('/candidate-dashboard/settings')}
+                  className="flex-[1.5] py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold transition-colors shadow-lg shadow-amber-500/20 text-[14px]"
+                >
+                  Complete Profile
                 </button>
               </div>
             </motion.div>

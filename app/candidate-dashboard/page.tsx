@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import {
   Bookmark, Eye, TrendingUp, ChevronRight, Building2,
-  MapPin, Clock, ExternalLink, Briefcase, Sparkles
+  MapPin, Clock, ExternalLink, Briefcase, Sparkles, Activity, Zap
 } from 'lucide-react';
 
 function calcCompletion(profile: any): number {
@@ -27,6 +28,8 @@ export default function CandidateDashboardPage() {
   const [profile, setProfile] = useState<any>(null);
   const [savedCount, setSavedCount] = useState(0);
   const [viewedJobs, setViewedJobs] = useState<any[]>([]);
+  const [aiMatches, setAiMatches] = useState<any[]>([]);
+  const [matchesLoading, setMatchesLoading] = useState(true);
 
   useEffect(() => {
     const cached = localStorage.getItem('candidate');
@@ -39,6 +42,24 @@ export default function CandidateDashboardPage() {
 
     const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
     setViewedJobs(viewed.slice(0, 6));
+
+    const fetchMatches = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setMatchesLoading(false);
+        return;
+      }
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/my-ai-matches`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success) {
+          setAiMatches(res.data.data.slice(0, 4));
+        }
+      } catch (err) {}
+      setMatchesLoading(false);
+    };
+    fetchMatches();
   }, []);
 
   const completion = calcCompletion(profile);
@@ -213,6 +234,101 @@ export default function CandidateDashboardPage() {
                 </Link>
               </motion.div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* AI Analyzed Opportunities */}
+      <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 md:p-8 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+        
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <div>
+            <h2 className="text-xl font-black text-white flex items-center gap-2">
+              <Zap className="w-5 h-5 text-blue-400 fill-blue-400/20" /> My AI Matches
+            </h2>
+            <p className="text-[13px] text-slate-400 font-medium mt-0.5">
+              Review your ATS scores and interview prep for jobs you've analyzed.
+            </p>
+          </div>
+          <Link
+            href="/jobs"
+            className="text-[13px] font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 shrink-0"
+          >
+            Find Matches <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {matchesLoading ? (
+          <div className="flex justify-center py-10">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : aiMatches.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
+            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-700">
+              <Activity className="w-8 h-8 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">No AI Analyses Yet</h3>
+            <p className="text-[14px] text-slate-400 mb-5 max-w-sm">
+              Use your credits to analyze jobs and get instant match scores, cover letters, and interview questions.
+            </p>
+            <Link
+              href="/jobs"
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20 text-[14px]"
+            >
+              Analyze Jobs
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+            {aiMatches.map((match, i) => {
+              const score = match.match_score;
+              let colors = "bg-rose-500/10 border-rose-500/20 text-rose-400";
+              if (score >= 80) colors = "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+              else if (score >= 60) colors = "bg-amber-500/10 border-amber-500/20 text-amber-400";
+              
+              return (
+                <Link key={match.id} href={`/job/${match.job.id}/${match.job.slug || match.job.id}?autoAnalyze=true`}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="group bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-2xl p-5 transition-all cursor-pointer h-full flex flex-col"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex gap-3 items-center">
+                        <div className="w-10 h-10 rounded-lg bg-white p-1 shrink-0 overflow-hidden">
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${match.job.image}`}
+                            alt={match.job.title}
+                            className="w-full h-full object-contain"
+                            onError={(e: any) => { e.target.src = '/logo.webp'; }}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="text-[15px] font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">{match.job.role}</h4>
+                          <p className="text-[12px] text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Building2 className="w-3 h-3" /> {match.job.title}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`px-2.5 py-1 rounded-lg ${colors} font-black text-[14px] flex items-center gap-1`}>
+                        {score}% <span className="text-[10px] uppercase font-bold text-slate-500 ml-0.5">Match</span>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-slate-400 line-clamp-2 mt-2 leading-relaxed flex-1">
+                      {match.ai_feedback}
+                    </p>
+                    <div className="mt-4 pt-3 border-t border-slate-700/50 flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      <span>{formatDate(match.updated_at)}</span>
+                      <span className="text-blue-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        Review Prep <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </motion.div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
