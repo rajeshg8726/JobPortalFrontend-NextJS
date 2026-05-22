@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import {
-  Bookmark, Eye, TrendingUp, ChevronRight, Building2,
+  Bookmark, Eye, ChevronRight, Building2,
   MapPin, Clock, ExternalLink, Briefcase, Sparkles, Activity, Zap
 } from 'lucide-react';
 
@@ -16,7 +16,6 @@ function calcCompletion(profile: any): number {
     !!profile.phone,
     !!profile.location,
     !!profile.bio,
-    !!profile.is_pro,
     !!(Array.isArray(profile.skills) ? profile.skills.length > 0 : !!profile.skills),
     !!profile.profile_image,
     !!profile.resume,
@@ -72,6 +71,9 @@ export default function CandidateDashboardPage() {
       icon: Bookmark,
       colorClass: 'bg-blue-50 text-blue-600 border-blue-100',
       link: '/candidate-dashboard/saved-jobs',
+      cardClass: 'bg-white border border-slate-200 hover:border-blue-200',
+      valueClass: 'text-slate-900',
+      labelClass: 'text-slate-400',
     },
     {
       label: 'Jobs Viewed',
@@ -79,13 +81,23 @@ export default function CandidateDashboardPage() {
       icon: Eye,
       colorClass: 'bg-emerald-50 text-emerald-600 border-emerald-100',
       link: null,
+      cardClass: 'bg-white border border-slate-200',
+      valueClass: 'text-slate-900',
+      labelClass: 'text-slate-400',
     },
     {
-      label: 'Profile Strength',
-      value: `${completion}%`,
-      icon: TrendingUp,
-      colorClass: 'bg-amber-50 text-amber-600 border-amber-100',
-      link: '/candidate-dashboard/settings',
+      label: profile?.is_pro ? 'PRO Plan Status' : 'AI Match Credits',
+      value: profile?.is_pro ? 'Unlimited' : `${profile?.ai_credits !== undefined ? profile.ai_credits : 6} Left`,
+      icon: Zap,
+      colorClass: profile?.is_pro 
+        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+        : 'bg-indigo-50 text-indigo-600 border-indigo-100',
+      link: '/pro',
+      cardClass: profile?.is_pro
+        ? 'bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-900 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:border-amber-500/60 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)]'
+        : 'bg-white border border-slate-200 hover:border-indigo-200',
+      valueClass: profile?.is_pro ? 'text-amber-400' : 'text-slate-900',
+      labelClass: profile?.is_pro ? 'text-amber-500/80' : 'text-slate-400',
     },
   ];
 
@@ -134,16 +146,16 @@ export default function CandidateDashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className={`bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex flex-col gap-4 ${
-                isClickable ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md hover:border-blue-200 transition-all duration-300' : ''
+              className={`rounded-[2rem] p-6 shadow-sm flex flex-col gap-4 transition-all duration-300 ${stat.cardClass} ${
+                isClickable ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
               }`}
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${stat.colorClass}`}>
                 <Icon className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-4xl font-black text-slate-900">{stat.value}</div>
-                <div className="text-[12px] font-bold text-slate-400 uppercase tracking-wider mt-1">{stat.label}</div>
+                <div className={`text-4xl font-black ${stat.valueClass}`}>{stat.value}</div>
+                <div className={`text-[12px] font-bold uppercase tracking-wider mt-1 ${stat.labelClass}`}>{stat.label}</div>
               </div>
             </motion.div>
           );
