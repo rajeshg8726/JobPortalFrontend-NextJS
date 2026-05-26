@@ -25,10 +25,36 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "RGJobs - Find Your Dream Job",
-  description: "Find your dream job",
+  title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
+  description:
+    "Discover 1000+ curated tech jobs from top Indian companies. Free ATS keyword analysis, AI cover letter generator, STAR interview prep, and INR salary benchmarks. Apply directly on employer sites — zero middlemen, 100% transparent.",
+  keywords: [
+    "jobs",
+    "job portal",
+    "tech jobs India",
+    "ATS resume checker",
+    "AI job matching",
+    "cover letter generator",
+    "freshers jobs",
+    "remote jobs India",
+    "internships 2025 2026",
+  ],
   verification: {
     google: "cMXxHXt8iDBLnyGweMvFDeotRL46bZ5KIVkFUEA2Mew",
+  },
+  openGraph: {
+    title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
+    description:
+      "Free ATS keyword analysis, AI cover letters, interview prep & salary benchmarks. 1000+ curated tech jobs from top companies.",
+    type: "website",
+    url: "https://www.rgjobs.in",
+    siteName: "RGJobs",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
+    description:
+      "Free ATS keyword analysis, AI cover letters, and 1000+ curated tech jobs. Apply directly — 100% transparent.",
   },
 };
 

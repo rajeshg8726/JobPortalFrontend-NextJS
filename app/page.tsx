@@ -1,51 +1,34 @@
-"use client";
+import HomeClient from "./components/HomeClient";
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import Slider from "./components/Slider";
-import Jobcard from "./components/Jobcard";
-
-export default function Home() {
-  const [searchedJobs, setSearchedJobs] = useState<any[] | null>(null);
-  const [allJobs, setAllJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
+async function fetchInitialJobs() {
   const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  try {
+    let res = await fetch(`${backendURL}/api/getAllJobs`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) {
+      // Fallback endpoint if the primary one isn't available
+      res = await fetch(`${backendURL}/api/jobs-search`, {
+        next: { revalidate: 300 },
+      });
+    }
+    const data = await res.json();
+    if (data.JobsData) {
+      return Array.isArray(data.JobsData) ? data.JobsData : [];
+    }
+    return Array.isArray(data) ? data : [];
+  } catch {
+    // If backend is completely unreachable, return empty — Jobcard handles empty state gracefully
+    return [];
+  }
+}
 
-  useEffect(() => {
-    const fetchInitialJobs = async () => {
-      try {
-        setLoading(true);
-        // Fallback to searching without parameters to get all jobs if /api/jobs doesn't work
-        const res = await axios.get(`${backendURL}/api/getAllJobs`).catch(() => 
-          axios.get(`${backendURL}/api/jobs-search`)
-        );
-        
-        if (res.data.JobsData) {
-          setAllJobs(Array.isArray(res.data.JobsData) ? res.data.JobsData : []);
-        }
-      } catch (err) {
-        console.error("Error fetching initial jobs:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialJobs();
-  }, [backendURL]);
+export default async function Home() {
+  const initialJobs = await fetchInitialJobs();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <Slider setSearchedJobs={setSearchedJobs} setLoading={setLoading} />
-      
-      <div className="w-full relative bg-slate-50 dark:bg-slate-950">
-        <Jobcard 
-          allJobs={allJobs} 
-          searchedJobs={searchedJobs} 
-          loading={loading} 
-        />
-      </div>
+      <HomeClient initialJobs={initialJobs} />
     </div>
   );
 }
-

@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import {
   Bookmark, Eye, ChevronRight, Building2,
-  MapPin, Clock, ExternalLink, Briefcase, Sparkles, Activity, Zap
+  MapPin, Clock, ExternalLink, Briefcase, Sparkles, Activity, Zap, Shield,
+  WifiOff, RefreshCw
 } from 'lucide-react';
 
 function calcCompletion(profile: any): number {
@@ -29,6 +30,7 @@ export default function CandidateDashboardPage() {
   const [viewedJobs, setViewedJobs] = useState<any[]>([]);
   const [aiMatches, setAiMatches] = useState<any[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
+  const [matchesError, setMatchesError] = useState(false);
 
   useEffect(() => {
     const cached = localStorage.getItem('candidate');
@@ -55,7 +57,11 @@ export default function CandidateDashboardPage() {
         if (res.data.success) {
           setAiMatches(res.data.data.slice(0, 4));
         }
-      } catch (err) {}
+        setMatchesError(false);
+      } catch (err) {
+        console.error('Failed to load AI matches', err);
+        setMatchesError(true);
+      }
       setMatchesLoading(false);
     };
     fetchMatches();
@@ -133,6 +139,88 @@ export default function CandidateDashboardPage() {
         <p className="text-[15px] font-medium text-slate-500">
           Here's your job search activity at a glance.
         </p>
+      </div>
+
+      {/* Profile Completeness & Aggregator Notice Banner */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Profile Completeness */}
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+          
+          {/* Progress Circle */}
+          <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="6" />
+              <motion.circle 
+                initial={{ strokeDashoffset: 264 }}
+                animate={{ strokeDashoffset: 264 - (264 * completion) / 100 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                cx="50" cy="50" r="42" fill="none" 
+                stroke={completion >= 80 ? "#10b981" : "#3b82f6"} 
+                strokeWidth="6" 
+                strokeDasharray="264" 
+                strokeLinecap="round" 
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center flex-col">
+              <span className="text-xl font-black text-white">{completion}%</span>
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+              Profile Completeness
+              {completion >= 80 && (
+                <span className="px-2.5 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-wider">High Density</span>
+              )}
+            </h3>
+            
+            {profile?.has_received_profile_bonus ? (
+              <p className="text-[13px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1.5">
+                <Sparkles className="w-4 h-4" /> You earned +3 Bonus Credits for completing your profile!
+              </p>
+            ) : completion >= 80 ? (
+              <p className="text-[13px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1.5">
+                <Sparkles className="w-4 h-4" /> You qualify for the bonus! Saved changes will reward +3 Credits.
+              </p>
+            ) : (
+              <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
+                Add Work Experience and Education to reach <strong className="text-blue-400">80% completeness</strong> and unlock **+3 Bonus AI Match Credits**!
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-1.5 mt-4">
+              {!profile?.full_name && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Name</span>}
+              {!profile?.phone && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Phone</span>}
+              {!profile?.location && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Location</span>}
+              {!profile?.bio && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Bio</span>}
+              {(!profile?.skills || profile.skills.length === 0) && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Skills</span>}
+              {!profile?.resume && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Resume</span>}
+              {(Array.isArray(profile?.work_experience) ? profile.work_experience.length === 0 : true) && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Work History</span>}
+              {(Array.isArray(profile?.education) ? profile.education.length === 0 : true) && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Education</span>}
+            </div>
+          </div>
+
+          <Link href="/candidate-dashboard/settings" className="px-5 py-2.5 bg-white hover:bg-slate-100 text-slate-950 text-[13px] font-black rounded-xl transition-all self-center sm:self-auto shrink-0 shadow-lg">
+            Complete Profile
+          </Link>
+        </div>
+
+        {/* Aggregator Disclosure Notice */}
+        <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
+          <div>
+            <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" /> Honest Disclosure
+            </h4>
+            <p className="text-[12px] text-slate-300 font-medium leading-relaxed">
+              RGJobs is a premium <strong>job aggregator</strong>. We index fresh listings directly from official company career sites. Applying will redirect you directly to their official career sites.
+            </p>
+          </div>
+          <div className="text-[10px] text-slate-500 font-bold border-t border-slate-800/50 pt-2.5 mt-3">
+            Direct Official Applications · No Gatekeeping
+          </div>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -274,6 +362,35 @@ export default function CandidateDashboardPage() {
         {matchesLoading ? (
           <div className="flex justify-center py-10">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : matchesError ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
+            <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mb-4 border border-rose-500/20">
+              <WifiOff className="w-8 h-8 text-rose-400" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Unable to load matches</h3>
+            <p className="text-[14px] text-slate-400 mb-5 max-w-sm">
+              Could not connect to the server. Please check your internet connection and try again.
+            </p>
+            <button
+              onClick={() => {
+                setMatchesLoading(true);
+                setMatchesError(false);
+                const token = localStorage.getItem('token');
+                if (token) {
+                  axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/my-ai-matches`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  }).then(res => {
+                    if (res.data.success) setAiMatches(res.data.data.slice(0, 4));
+                    setMatchesError(false);
+                  }).catch(() => setMatchesError(true))
+                  .finally(() => setMatchesLoading(false));
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20 text-[14px]"
+            >
+              <RefreshCw className="w-4 h-4" /> Retry
+            </button>
           </div>
         ) : aiMatches.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">

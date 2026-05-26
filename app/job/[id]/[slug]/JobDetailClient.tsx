@@ -41,6 +41,70 @@ import {
   RefreshCw
 } from 'lucide-react';
 
+/* ─────────────────────────────────────────────────────────────────────────
+   RADAR / SPIDER CHART — pure SVG, no external charting library needed
+   Shows the 5-category AI score breakdown. Blurred + locked for BASIC users.
+───────────────────────────────────────────────────────────────────────── */
+function RadarChart({ breakdown, isPro }: { breakdown: Record<string, number> | null; isPro: boolean }) {
+  if (!breakdown) return null;
+  const cx = 100, cy = 95, r = 60;
+  const axes = [
+    { key: 'technical_skills',    label: 'Technical',  max: 40 },
+    { key: 'experience_relevance',label: 'Experience', max: 25 },
+    { key: 'education',           label: 'Education',  max: 10 },
+    { key: 'soft_skills',         label: 'Soft Skills',max: 15 },
+    { key: 'keyword_match',       label: 'Keywords',   max: 10 },
+  ];
+  const n = axes.length;
+  const angles = axes.map((_, i) => -Math.PI / 2 + (2 * Math.PI * i) / n);
+  const pt = (rad: number, ang: number) => ({ x: cx + rad * Math.cos(ang), y: cy + rad * Math.sin(ang) });
+  const poly = (pts: { x: number; y: number }[]) => pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const levels = [0.25, 0.5, 0.75, 1.0];
+  const outerPts = angles.map(a => pt(r, a));
+  const dataPts  = axes.map((axis, i) => {
+    const val  = Number(breakdown?.[axis.key] ?? 0);
+    const norm = Math.min(val / axis.max, 1);
+    return pt(r * norm, angles[i]);
+  });
+  const labelPts = angles.map((a, i) => ({ ...pt(r + 22, a), label: axes[i].label }));
+
+  return (
+    <div className="relative w-full">
+      <svg viewBox="0 0 200 175" className={`w-full transition-all duration-300 ${!isPro ? 'blur-sm select-none pointer-events-none' : ''}`}>
+        {/* Grid */}
+        {levels.map(lv => (
+          <polygon key={lv} points={poly(angles.map(a => pt(r * lv, a)))} fill="none" stroke="rgba(148,163,184,0.1)" strokeWidth="1" />
+        ))}
+        {/* Axis lines */}
+        {outerPts.map((p, i) => (
+          <line key={i} x1={cx} y1={cy} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} stroke="rgba(148,163,184,0.1)" strokeWidth="1" />
+        ))}
+        {/* Data polygon */}
+        <polygon points={poly(dataPts)} fill="rgba(99,102,241,0.18)" stroke="rgba(99,102,241,0.75)" strokeWidth="2" strokeLinejoin="round" />
+        {/* Data dots */}
+        {dataPts.map((p, i) => (
+          <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="3.5" fill="#6366f1" stroke="rgba(15,23,42,0.9)" strokeWidth="2" />
+        ))}
+        {/* Category labels */}
+        {labelPts.map((p, i) => (
+          <text key={i} x={p.x.toFixed(1)} y={p.y.toFixed(1)} textAnchor="middle" dominantBaseline="middle" fontSize="7" fontWeight="bold" fill="rgba(148,163,184,0.85)">
+            {p.label}
+          </text>
+        ))}
+      </svg>
+      {!isPro && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Link href="/pro" className="flex flex-col items-center gap-2 bg-slate-900/90 border border-indigo-500/40 hover:border-indigo-500/70 rounded-2xl px-5 py-4 text-center transition-all group">
+            <Lock className="w-5 h-5 text-indigo-400" />
+            <p className="text-[11px] font-black text-white">Score Breakdown</p>
+            <span className="text-[10px] font-bold text-indigo-400 group-hover:text-indigo-300 transition-colors">Unlock with PRO →</span>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const Toast = ({ message, type, onClose }: any) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 4000);
@@ -79,7 +143,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const letterRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState<'pdf' | 'word' | null>(null);
+  const [isDownloading, setIsDownloading] = useState<'pdf' | 'word' | 'interview-pdf' | null>(null);
   const [interviewQuestions, setInterviewQuestions] = useState<string[]>([]);
   const [salaryBenchmark, setSalaryBenchmark] = useState<any>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
@@ -90,6 +154,10 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const [showOptimizerModal, setShowOptimizerModal] = useState(false);
   const [showProfileAlert, setShowProfileAlert] = useState(false);
   const [profileCompletion, setProfileCompletion] = useState<number>(0);
+  const [scoreBreakdown, setScoreBreakdown] = useState<Record<string, number> | null>(null);
+  const [originalBio, setOriginalBio] = useState<string>('');
+  const [isPro, setIsPro] = useState<boolean>(false);
+  const [aiProvider, setAiProvider] = useState<string | null>(null);
 
   const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -107,6 +175,8 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       const savedJobs = JSON.parse(saved);
       setIsSaved(savedJobs.includes(parseInt(id)));
     }
+    setOriginalBio(user?.bio || '');
+    setIsPro(!!(user?.is_pro));
   }, [id]);
 
   const fetchJobDetails = async () => {
@@ -216,13 +286,12 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
             !!profile.phone,
             !!profile.location,
             !!profile.bio,
-            !!profile.is_pro,
             !!(Array.isArray(profile.skills) ? profile.skills.length > 0 : !!profile.skills),
             !!profile.profile_image,
             !!profile.resume,
           ];
           const comp = Math.round((checks.filter(Boolean).length / checks.length) * 100);
-          if (comp < 90) {
+          if (comp < 70) {
             setProfileCompletion(comp);
             setShowProfileAlert(true);
             return;
@@ -263,8 +332,16 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
           } catch(e) { setSalaryBenchmark(null); }
         }
         setOptimizedProfile(aiData.optimized_profile || null);
+        if (aiData.score_breakdown) {
+          try {
+            setScoreBreakdown(typeof aiData.score_breakdown === 'string' ? JSON.parse(aiData.score_breakdown) : aiData.score_breakdown);
+          } catch(e) { setScoreBreakdown(null); }
+        }
 
-        setToastMessage({ msg: 'AI Analysis complete!', type: 'success' });
+        // Track AI provider for premium badge
+        setAiProvider(response.data.ai_provider || null);
+
+        setToastMessage({ msg: response.data.ai_provider === 'premium' ? '✨ Premium AI Analysis complete!' : 'AI Analysis complete!', type: 'success' });
       }
     } catch (err: any) {
       console.error('AI Match Error:', err);
@@ -399,6 +476,96 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
     } catch (err) {
       console.error(err);
       setToastMessage({ msg: 'Failed to generate Word document', type: 'error' });
+    } finally {
+      setIsDownloading(null);
+    }
+  };
+
+  const downloadInterviewPDF = async () => {
+    if (!interviewQuestions || interviewQuestions.length === 0) return;
+    setIsDownloading('interview-pdf');
+    try {
+      const doc = new jsPDF();
+      const margin = 20;
+      const pageWidth = 210;
+      const maxLineWidth = pageWidth - margin * 2;
+
+      // Dark header
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageWidth, 52, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(255, 255, 255);
+      doc.text('INTERVIEW PREP KIT', margin, 22);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`${(job?.role || 'Role').toUpperCase()} — ${(job?.title || 'Company').toUpperCase()}`, margin, 33);
+      doc.text(`Generated by RGJobs AI  •  ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, margin, 43);
+
+      // Divider
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 60, pageWidth - margin, 60);
+
+      let y = 72;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(99, 102, 241);
+      doc.text('LIKELY INTERVIEW QUESTIONS', margin, y);
+      y += 14;
+
+      interviewQuestions.forEach((q: string, i: number) => {
+        if (y > 255) { doc.addPage(); y = 25; }
+
+        // Question number badge
+        doc.setFillColor(30, 27, 75);
+        doc.roundedRect(margin, y - 5.5, 7, 7, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(129, 140, 248);
+        doc.text(`${i + 1}`, margin + (i < 9 ? 2 : 1), y + 0.3);
+
+        // Question text
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(15, 23, 42);
+        const lines = doc.splitTextToSize(q, maxLineWidth - 12);
+        lines.forEach((line: string, li: number) => {
+          if (y > 265) { doc.addPage(); y = 25; }
+          doc.text(line, margin + 10, y);
+          if (li < lines.length - 1) y += 6;
+        });
+        y += 8;
+
+        // Tip
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        const tipLines = doc.splitTextToSize('Tip: Use the STAR method (Situation, Task, Action, Result) to structure your answer.', maxLineWidth - 12);
+        tipLines.forEach((line: string) => {
+          if (y > 265) { doc.addPage(); y = 25; }
+          doc.text(line, margin + 10, y);
+          y += 5;
+        });
+        y += 7;
+      });
+
+      // Footer on every page
+      const totalPages = (doc as any).internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text('Generated by RGJobs AI — rgjobs.in', margin, 288);
+        doc.text(`Page ${p} of ${totalPages}`, pageWidth - margin, 288, { align: 'right' });
+      }
+
+      doc.save(`${(job?.role || 'Role').replace(/\s+/g, '_')}_Interview_Prep_RGJobs.pdf`);
+      setToastMessage({ msg: '📄 Interview Prep PDF Downloaded!', type: 'success' });
+    } catch (err) {
+      console.error(err);
+      setToastMessage({ msg: 'Failed to generate PDF', type: 'error' });
     } finally {
       setIsDownloading(null);
     }
@@ -660,6 +827,11 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-5 h-5 text-purple-400" />
                     <h3 className="text-lg font-black text-white uppercase tracking-widest">AI Match Score</h3>
+                    {aiProvider === 'premium' && (
+                      <span className="ml-1 px-2.5 py-0.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full text-[10px] font-black text-purple-300 uppercase tracking-widest flex items-center gap-1">
+                        <Zap className="w-2.5 h-2.5" /> Premium
+                      </span>
+                    )}
                   </div>
 
                   {requiresUpgrade ? (
@@ -713,6 +885,44 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                         {matchFeedback}
                       </p>
 
+                      {/* ── Score Breakdown Radar Chart ── */}
+                      {scoreBreakdown && (
+                        <div className="w-full mt-4 border-t border-slate-800 pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <TrendingUp className="w-3.5 h-3.5 text-indigo-400" /> Score Breakdown
+                            </h5>
+                            {!isPro && (
+                              <span className="text-[9px] font-bold text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full">PRO Only</span>
+                            )}
+                          </div>
+                          <RadarChart breakdown={scoreBreakdown} isPro={isPro} />
+                          {isPro && (
+                            <div className="mt-3 space-y-2">
+                              {[
+                                { key: 'technical_skills',     label: 'Technical',  max: 40 },
+                                { key: 'experience_relevance', label: 'Experience', max: 25 },
+                                { key: 'soft_skills',          label: 'Soft Skills',max: 15 },
+                                { key: 'education',            label: 'Education',  max: 10 },
+                                { key: 'keyword_match',        label: 'Keywords',   max: 10 },
+                              ].map(item => {
+                                const val = scoreBreakdown[item.key] ?? 0;
+                                const pct = Math.round((val / item.max) * 100);
+                                return (
+                                  <div key={item.key} className="flex items-center gap-2">
+                                    <span className="text-[9px] text-slate-400 w-[68px] shrink-0">{item.label}</span>
+                                    <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+                                      <div className="h-full bg-indigo-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <span className="text-[9px] font-bold text-slate-300 w-8 text-right shrink-0">{val}/{item.max}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {missingKeywords && missingKeywords.length > 0 && (
                         <div className="w-full mt-6 text-left border-t border-slate-800 pt-6">
                           <h5 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3">Missing ATS Keywords:</h5>
@@ -765,9 +975,24 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       {/* Interview Questions */}
                       {interviewQuestions && interviewQuestions.length > 0 && (
                         <div className="w-full mt-6 text-left border-t border-slate-800 pt-6">
-                          <h5 className="text-[12px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <MessageSquare className="w-3.5 h-3.5" /> Likely Interview Questions
-                          </h5>
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="text-[12px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                              <MessageSquare className="w-3.5 h-3.5" /> Likely Interview Questions
+                            </h5>
+                            <button
+                              onClick={downloadInterviewPDF}
+                              disabled={isDownloading === 'interview-pdf'}
+                              title="Download Interview Prep as PDF"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50"
+                            >
+                              {isDownloading === 'interview-pdf' ? (
+                                <div className="w-3 h-3 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                              ) : (
+                                <Download className="w-3 h-3" />
+                              )}
+                              PDF
+                            </button>
+                          </div>
                           <div className="flex flex-col gap-2">
                             {interviewQuestions.map((q: string, i: number) => (
                               <div key={i} className="bg-blue-500/10 border border-blue-500/20 rounded-xl overflow-hidden">
@@ -1065,75 +1290,133 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
         )}
       </AnimatePresence>
 
-      {/* Resume Optimizer Modal */}
+      {/* ── Resume Optimizer Modal — Before / After Split Panel ── */}
       <AnimatePresence>
         {showOptimizerModal && optimizedProfile && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
               onClick={() => setShowOptimizerModal(false)}
             />
-            
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-slate-900 border border-emerald-500/30 rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(16,185,129,0.1)] flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-4xl bg-slate-900 border border-emerald-500/30 rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(16,185,129,0.12)] flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 md:p-8 border-b border-white/5 bg-emerald-500/5 shrink-0 relative">
-                <div className="flex justify-between items-center">
+              {/* Header */}
+              <div className="p-6 border-b border-white/5 bg-emerald-500/5 shrink-0 relative">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500 to-blue-500" />
+                <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-xl font-black text-white flex items-center gap-3">
-                      <div className="p-2 bg-emerald-500/20 rounded-xl">
+                      <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/20">
                         <UserRoundPen className="w-5 h-5 text-emerald-400" />
                       </div>
                       AI Resume Optimizer
                     </h3>
-                    <p className="text-sm font-medium text-slate-400 mt-2">
-                      We've rewritten your bio to include the missing ATS keywords naturally.
+                    <p className="text-sm font-medium text-slate-400 mt-2 ml-14">
+                      See exactly how AI rewrote your bio to pass ATS filters for this role.
                     </p>
                   </div>
-                  <button onClick={() => setShowOptimizerModal(false)} className="p-2 rounded-xl hover:bg-white/5 text-slate-400">
+                  <button onClick={() => setShowOptimizerModal(false)} className="p-2 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-8 overflow-y-auto">
-                <div className="bg-slate-950/50 rounded-2xl p-6 border border-white/5 relative group">
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-full uppercase tracking-widest">PRO Active</div>
+              {/* Split Panel Body */}
+              <div className="flex-1 overflow-y-auto p-6 md:p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  {/* Left: Original Bio */}
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-rose-500" />
+                      <span className="text-[11px] font-black text-rose-400 uppercase tracking-widest">Before — Original Bio</span>
+                    </div>
+                    <div className="flex-1 bg-rose-500/5 border border-rose-500/20 rounded-2xl p-5">
+                      {originalBio ? (
+                        <p className="text-[14px] leading-[1.8] text-slate-300 whitespace-pre-wrap">{originalBio}</p>
+                      ) : (
+                        <p className="text-[13px] text-slate-500 italic">No bio found. Complete your profile settings for better AI results.</p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[15px] leading-[1.8] text-slate-300 font-medium italic whitespace-pre-wrap">
-                    "{optimizedProfile}"
-                  </p>
+
+                  {/* Right: AI Optimized Bio (PRO gate) */}
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">After — AI Optimized</span>
+                      {isPro && (
+                        <span className="ml-auto px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[9px] font-black uppercase tracking-wider rounded-full">PRO Active</span>
+                      )}
+                    </div>
+                    <div className="flex-1 relative">
+                      <div className={`bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 h-full transition-all duration-300 ${!isPro ? 'blur-sm select-none' : ''}`}>
+                        <p className="text-[14px] leading-[1.8] text-slate-200 whitespace-pre-wrap">{optimizedProfile}</p>
+                      </div>
+                      {!isPro && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <Link href="/pro" className="flex flex-col items-center gap-2 bg-slate-900/95 border border-emerald-500/30 hover:border-emerald-500/60 rounded-2xl px-6 py-5 text-center shadow-2xl transition-all group">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                              <Lock className="w-5 h-5 text-emerald-400" />
+                            </div>
+                            <p className="text-[13px] font-black text-white">Unlock Optimized Bio</p>
+                            <p className="text-[11px] font-medium text-slate-400">Copy & paste directly into your profile</p>
+                            <span className="mt-1 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-lg font-black text-[11px] transition-colors">Upgrade to PRO →</span>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="mt-8 grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Benefit</div>
-                    <div className="text-sm font-bold text-slate-200">Higher ATS Score</div>
+
+                {/* Injected keywords callout (PRO only) */}
+                {isPro && missingKeywords && missingKeywords.length > 0 && (
+                  <div className="mt-6 p-5 bg-slate-800/50 border border-slate-700/50 rounded-2xl">
+                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Zap className="w-3.5 h-3.5 text-amber-400" /> ATS Keywords Injected by AI
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {missingKeywords.slice(0, 10).map((kw, i) => (
+                        <span key={i} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-bold rounded-lg">+ {kw}</span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Action</div>
-                    <div className="text-sm font-bold text-slate-200">Keyword Inclusion</div>
-                  </div>
-                </div>
+                )}
               </div>
 
-              <div className="p-6 border-t border-white/5 bg-slate-950/50">
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(optimizedProfile);
-                    setToastMessage({ msg: 'Optimized Bio copied!', type: 'success' });
-                  }}
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
-                >
-                  <FileCheck className="w-5 h-5" /> Copy Optimized Content
-                </button>
+              {/* Footer */}
+              <div className="p-5 border-t border-white/5 bg-slate-950/50 shrink-0">
+                {isPro ? (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(optimizedProfile);
+                        setToastMessage({ msg: 'Optimized Bio copied to clipboard!', type: 'success' });
+                      }}
+                      className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                    >
+                      <FileCheck className="w-5 h-5" /> Copy Optimized Bio
+                    </button>
+                    <Link
+                      href="/candidate-dashboard/settings"
+                      className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-[14px]"
+                    >
+                      Update Profile
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href="/pro"
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white rounded-xl font-black transition-all flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <Sparkles className="w-5 h-5" /> Upgrade to PRO to Unlock Optimized Bio
+                  </Link>
+                )}
               </div>
             </motion.div>
           </div>

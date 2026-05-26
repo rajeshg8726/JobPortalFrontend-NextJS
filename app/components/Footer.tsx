@@ -55,16 +55,10 @@ export default function Footer() {
     ],
     employers: [
       { name: "Post Jobs", path: "/post-jobs", upcoming: false },
-      { name: "Employer Dashboard", path: "/coming-soon", upcoming: true },
-      { name: "Company Profile", path: "/coming-soon", upcoming: true },
-      { name: "Pricing Plans", path: "/coming-soon", upcoming: true },
     ],
     resources: [
-      { name: "Blog", path: "/coming-soon", upcoming: true },
-      { name: "Career Advice", path: "/coming-soon", upcoming: true },
-      { name: "Interview Tips", path: "/coming-soon", upcoming: true },
-      { name: "Resume Tips", path: "/coming-soon", upcoming: true },
       { name: "Contact Us", path: "/contact", upcoming: false },
+      { name: "About Us", path: "/about", upcoming: false },
     ],
     company: [
       { name: "About Us", path: "/about", upcoming: false },
@@ -72,7 +66,6 @@ export default function Footer() {
       { name: "Privacy Policy", path: "/privacy", upcoming: false },
       { name: "Terms of Service", path: "/terms", upcoming: false },
       { name: "Refund & Cancellation Policy", path: "/refund-policy", upcoming: false },
-      { name: "FAQ", path: "/coming-soon", upcoming: true },
     ],
   };
 

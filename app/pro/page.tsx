@@ -13,6 +13,7 @@ export default function ProPricing() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'failed' | null>(null);
   const [paymentErrorMsg, setPaymentErrorMsg] = useState('');
+  const [purchasedPack, setPurchasedPack] = useState<'PRO' | 'TOPUP' | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
 
   const loadRazorpayScript = () => {
@@ -25,8 +26,9 @@ export default function ProPricing() {
     });
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (packageType: 'PRO' | 'TOPUP' = 'PRO') => {
     setIsProcessing(true);
+    setPurchasedPack(packageType);
     
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
@@ -49,7 +51,8 @@ export default function ProPricing() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: JSON.stringify({ package_type: packageType })
       });
       
       if (!orderRes.ok) {
@@ -65,8 +68,8 @@ export default function ProPricing() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: orderData.amount,
         currency: "INR",
-        name: "RGJobs PRO",
-        description: "Upgrade to Professional Tier",
+        name: packageType === 'TOPUP' ? "RGJobs Credits" : "RGJobs PRO",
+        description: packageType === 'TOPUP' ? "10 AI Match Credits Pack" : "Upgrade to Professional Tier",
         order_id: orderData.order_id,
         handler: async function (response: any) {
           try {
@@ -86,7 +89,11 @@ export default function ProPricing() {
             if (verifyRes.ok) {
               setPaymentStatus('success');
               if (userStr) {
-                 const updatedUser = { ...user, is_pro: true };
+                 const updatedUser = { 
+                   ...user, 
+                   is_pro: packageType === 'PRO' ? true : user.is_pro,
+                   ai_credits: packageType === 'TOPUP' ? (user.ai_credits || 0) + 10 : user.ai_credits
+                 };
                  const userType = localStorage.getItem('userType');
                  localStorage.setItem(userType === 'Candidate' ? 'candidate' : 'employer', JSON.stringify(updatedUser));
               }
@@ -101,12 +108,12 @@ export default function ProPricing() {
           }
         },
         prefill: {
-          name: user.name || "",
+          name: user.name || user.full_name || "",
           email: user.email || "",
           contact: user.phone || ""
         },
         theme: {
-          color: "#8B5CF6"
+          color: packageType === 'TOPUP' ? "#10B981" : "#8B5CF6"
         }
       };
 
@@ -194,7 +201,9 @@ export default function ProPricing() {
               
               <p className="text-slate-400 mb-8 leading-relaxed">
                 {paymentStatus === 'success' 
-                  ? 'Welcome to RGJobs PRO! Your account has been upgraded and you now have access to all premium features.' 
+                  ? (purchasedPack === 'TOPUP' 
+                      ? '10 AI Match credits loaded successfully! You can now analyze fresh opportunities.' 
+                      : 'Welcome to RGJobs PRO! Your account has been upgraded and you now have access to all premium features.')
                   : paymentErrorMsg}
               </p>
               
@@ -259,182 +268,372 @@ export default function ProPricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
           
           {/* Free Tier */}
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-[2rem] p-8 md:p-12 relative overflow-hidden"
+            className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-[2rem] p-6 md:p-8 flex flex-col justify-between relative overflow-hidden"
           >
-            <h3 className="text-2xl font-black text-white mb-2">Basic Candidate</h3>
-            <p className="text-slate-400 font-medium mb-8">For casual job seekers exploring the market.</p>
-            
-            <div className="flex items-end gap-2 mb-8">
-              <span className="text-5xl font-black text-white">Free</span>
-              <span className="text-slate-500 font-medium mb-1">forever</span>
-            </div>
+            <div>
+              <h3 className="text-xl font-black text-white mb-1.5">Basic Candidate</h3>
+              <p className="text-slate-400 text-xs font-medium mb-6">Explore the market and test our AI matching tools.</p>
+              
+              <div className="flex items-end gap-1.5 mb-6">
+                <span className="text-4xl font-black text-white">Free</span>
+                <span className="text-slate-500 text-xs font-medium mb-1">forever</span>
+              </div>
 
-            {/* Honest aggregator transparency note */}
-            <div className="flex items-start gap-2 p-3 mb-6 bg-slate-800/60 border border-slate-700 rounded-xl">
-              <Shield className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                <span className="text-blue-400 font-bold">Honest disclosure:</span> All jobs on RGJobs are curated from external company career pages (Amazon, Google, etc.). Applying takes you directly to the official company website — we never collect your application.
-              </p>
-            </div>
+              {/* Honest aggregator transparency note */}
+              <div className="flex items-start gap-2 p-3 mb-6 bg-slate-950/40 border border-slate-800 rounded-xl">
+                <Shield className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                  <span className="text-blue-400 font-bold">100% Transparent:</span> We are a job aggregator. All listings redirect you to apply directly on the employer's official website. We never collect or gatekeep applications.
+                </p>
+              </div>
 
-            <div className="space-y-5 mb-10">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                <span className="text-slate-300 font-medium">Browse unlimited curated job postings</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                <span className="text-slate-300 font-medium">Apply directly on the company's official site</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                <span className="text-slate-300 font-medium">Build your candidate profile</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                <div>
-                  <span className="text-slate-300 font-medium block">3 Free AI Job Matches</span>
-                  <span className="text-xs text-slate-500">Try AI matching before you commit to PRO</span>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="text-slate-300 text-sm font-medium">Browse unlimited curated job listings</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="text-slate-300 text-sm font-medium">6 Starting AI Match Credits</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-300 text-sm font-medium block">Weekly credit refresh</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Lazy refreshes +1 credit every week (max 6)</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-300 text-sm font-medium block">Profile Completeness Bonus</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Earn +3 extra credits at 80% profile completeness</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-300 text-sm font-medium block">First Match Free</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Your very first profile analysis costs 0 credits</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
+                  <span className="text-slate-600 text-sm font-medium line-through">Unlimited AI Match Scores</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
+                  <span className="text-slate-600 text-sm font-medium line-through">AI Cover Letter Vector PDF Download</span>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-slate-600 shrink-0" />
-                <span className="text-slate-500 font-medium line-through">Unlimited AI Match Scores</span>
+            </div>
+
+            <div>
+              <button 
+                onClick={() => router.push('/login')}
+                className="w-full py-3.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-300 font-bold hover:bg-slate-900 transition-colors text-sm"
+              >
+                Create Free Account
+              </button>
+              <p className="text-center text-[11px] font-medium text-slate-600 mt-2.5">
+                Already have an account? <Link href="/login" className="text-slate-400 hover:text-white underline">Sign in</Link>
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Micro Top-Up Pack Tier (NEW) */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-slate-900/40 backdrop-blur-xl border border-emerald-500/20 rounded-[2rem] p-6 md:p-8 flex flex-col justify-between relative overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.03)]"
+          >
+            {/* Top-up badge */}
+            <div className="absolute top-0 right-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest py-1 px-3 rounded-b-lg">
+              Low Cost Pack
+            </div>
+
+            <div>
+              <h3 className="text-xl font-black text-white mb-1.5 flex items-center gap-1.5">
+                <Target className="w-5 h-5 text-emerald-400" /> 10 Credits Top-Up
+              </h3>
+              <p className="text-slate-400 text-xs font-medium mb-6">Perfect if you only need a quick boost on high-priority applications.</p>
+              
+              <div className="flex items-end gap-1.5 mb-2">
+                <span className="text-4xl font-black text-white">₹29</span>
+                <span className="text-slate-500 text-xs font-medium mb-1">/ one-time buy</span>
               </div>
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-slate-600 shrink-0" />
-                <span className="text-slate-500 font-medium line-through">Missing ATS Keywords</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-slate-600 shrink-0" />
-                <span className="text-slate-500 font-medium line-through">AI Cover Letter Generator (.PDF & .DOC)</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-slate-600 shrink-0" />
-                <span className="text-slate-500 font-medium line-through">AI Resume Optimizer</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-slate-600 shrink-0" />
-                <span className="text-slate-500 font-medium line-through">Salary Benchmark & Insights</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-slate-600 shrink-0" />
-                <span className="text-slate-500 font-medium line-through">Likely Interview Questions & Tips</span>
+              <p className="text-[10px] text-emerald-400 font-semibold mb-6 flex items-center gap-1">
+                <IndianRupee className="w-2.5 h-2.5" /> Just ₹2.9 per analysis. Zero commitment.
+              </p>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">+10 AI Match Scores</span>
+                    <span className="text-[10px] text-slate-400">Instantly loads 10 credits onto your current balance.</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">Custom ATS Keyword Check</span>
+                    <span className="text-[10px] text-slate-400">See all missing critical keywords for target roles.</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">Cover Letter Generator</span>
+                    <span className="text-[10px] text-slate-400">Generate and copy personalized custom cover letters.</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">STAR-Interview prep & Salary benchmarking</span>
+                    <span className="text-[10px] text-slate-400">Unlock custom interview sets and local salary indicators.</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
+                  <span className="text-slate-600 text-sm font-medium line-through">Unlimited Matching (Capped at 10)</span>
+                </div>
               </div>
             </div>
 
-            <button 
-              onClick={() => router.push('/login')}
-              className="w-full py-4 rounded-xl border border-slate-700 text-white font-bold hover:bg-slate-800 transition-colors"
-            >
-              Create Free Account
-            </button>
-            <p className="text-center text-xs font-medium text-slate-600 mt-3">
-              Already have an account? <Link href="/login" className="text-slate-400 hover:text-white underline">Sign in</Link>
-            </p>
+            <div>
+              <button 
+                onClick={() => handleUpgrade('TOPUP')}
+                disabled={isProcessing}
+                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all text-sm shadow-lg shadow-emerald-600/10 hover:shadow-emerald-600/25 flex items-center justify-center gap-2"
+              >
+                {isProcessing && purchasedPack === 'TOPUP' ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Get 10 Credits"
+                )}
+              </button>
+              <p className="text-center text-[10px] font-medium text-slate-600 mt-3 flex items-center justify-center gap-1">
+                <Shield className="w-3 h-3" /> One-Time payment · Razorpay Secure
+              </p>
+            </div>
           </motion.div>
 
           {/* PRO Tier */}
           <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-gradient-to-b from-purple-900/40 to-blue-900/20 backdrop-blur-2xl border-2 border-purple-500/50 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_0_80px_rgba(139,92,246,0.15)]"
+            className="bg-gradient-to-b from-purple-900/40 to-blue-900/20 backdrop-blur-2xl border-2 border-purple-500/50 rounded-[2.5rem] p-6 md:p-8 flex flex-col justify-between relative overflow-hidden shadow-[0_0_80px_rgba(139,92,246,0.1)]"
           >
             {/* Pro Badge */}
-            <div className="absolute top-0 right-8 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-black uppercase tracking-widest py-2 px-4 rounded-b-xl shadow-lg">
-              Most Popular
+            <div className="absolute top-0 right-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded-b-lg shadow-md">
+              Best Value
             </div>
 
-            <div className="flex items-center gap-3 mb-2 mt-2">
-              <Zap className="w-6 h-6 text-purple-400 fill-purple-400/20" />
-              <h3 className="text-2xl font-black text-white">RGJobs PRO</h3>
-            </div>
-            <p className="text-purple-200/70 font-medium mb-8 leading-relaxed">
-              Stop applying blindly. Get the ultimate AI advantage and bypass HR filters to land your dream job faster.
-            </p>
-            
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-5xl font-black text-white">₹199</span>
-              <span className="text-purple-200/50 font-medium mb-1">/ 30 Days</span>
-            </div>
-            <p className="text-[12px] text-emerald-400/80 font-semibold mb-8 flex items-center gap-1.5">
-              <IndianRupee className="w-3 h-3" />
-              Less than ₹7/day. Land a job 1 week earlier = ₹12,500 saved. ROI: 62x.
-            </p>
+            <div>
+              <h3 className="text-xl font-black text-white mb-1.5 flex items-center gap-1.5 mt-2">
+                <Zap className="w-5 h-5 text-purple-400 fill-purple-400/20" /> RGJobs PRO
+              </h3>
+              <p className="text-purple-200/70 text-xs font-medium mb-6">Stop applying blindly. Get the ultimate unlimited AI advantage and bypass HR filters.</p>
+              
+              <div className="flex items-end gap-1.5 mb-2">
+                <span className="text-4xl font-black text-white">₹199</span>
+                <span className="text-purple-200/50 text-xs font-medium mb-1">/ 30 Days</span>
+              </div>
+              <p className="text-[10px] text-purple-300 font-semibold mb-6 flex items-center gap-1">
+                <IndianRupee className="w-2.5 h-2.5" /> Less than ₹7/day. Land your target interview faster.
+              </p>
 
-            <div className="space-y-5 mb-10">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block mb-0.5">Unlimited AI Match Scores</span>
-                  <span className="text-sm text-purple-200/60 font-medium leading-relaxed">Know your exact profile matching percentage against any job description instantly.</span>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-white font-bold text-sm block mb-0.5">100% Unlimited AI Match Scores</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">No limits or caps. Run matching percentage checks against any number of jobs.</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block mb-0.5">Missing ATS Keywords</span>
-                  <span className="text-sm text-purple-200/60 font-medium leading-relaxed">See the exact keywords and critical skills that automated recruiter filters are looking for.</span>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-white font-bold text-sm block mb-0.5">Cover Letter PDF & DOC Download</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Generate, customize and download print-ready vector PDF or Microsoft Word DOC cover letters.</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block mb-0.5">AI Cover Letter Generator (.PDF & .DOC)</span>
-                  <span className="text-sm text-purple-200/60 font-medium leading-relaxed">Generate personalized, job-specific cover letters. Copy or download instantly as clean vector PDF or editable Microsoft Word .DOC!</span>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-white font-bold text-sm block mb-0.5">AI Resume Bio Optimizer</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Let the AI rewrite your settings bio to incorporate high-impact ATS keywords automatically.</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block mb-0.5">AI Resume Optimizer <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full ml-1">New</span></span>
-                  <span className="text-sm text-purple-200/60 font-medium leading-relaxed">Automatically rewrites your profile biography to natural, highly persuasive prose incorporating missing ATS keywords under your settings.</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block mb-0.5">Salary Benchmark & Insights <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full ml-1">New</span></span>
-                  <span className="text-sm text-purple-200/60 font-medium leading-relaxed">Know the realistic salary range for any role in INR based on your profile, and receive negotiating guidelines.</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block mb-0.5">Likely Interview Questions & Tips <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full ml-1">New</span></span>
-                  <span className="text-sm text-purple-200/60 font-medium leading-relaxed">Get 10 custom interview questions tailored specifically to the role's stack and your background, with expert guidelines.</span>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-white font-bold text-sm block mb-0.5">STAR Prep Kit & Local Salary Benchmarks</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Get custom interview prep sheets and realistic local salary benchmarks in INR.</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <button 
-              onClick={handleUpgrade}
-              disabled={isProcessing}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black text-lg transition-all shadow-[0_10px_30px_rgba(139,92,246,0.3)] hover:shadow-[0_15px_40px_rgba(139,92,246,0.5)] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Upgrade to PRO"
-              )}
-            </button>
-            <p className="text-center text-xs font-medium text-purple-200/40 mt-4 uppercase tracking-widest flex flex-col gap-1">
-              <span>One-Time Payment. No Auto-Renewal.</span>
-              <span className="flex items-center justify-center gap-1 mt-1 text-emerald-500/70"><Shield className="w-3 h-3" /> Secure Razorpay Checkout</span>
-            </p>
+            <div>
+              <button 
+                onClick={() => handleUpgrade('PRO')}
+                disabled={isProcessing}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black text-sm transition-all shadow-[0_8px_25px_rgba(139,92,246,0.25)] hover:shadow-[0_12px_30px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
+              >
+                {isProcessing && purchasedPack === 'PRO' ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Upgrade to PRO"
+                )}
+              </button>
+              <p className="text-center text-[10px] font-medium text-purple-200/40 mt-3 uppercase tracking-widest flex flex-col gap-0.5">
+                <span>One-Time Payment. No Auto-Renewal.</span>
+                <span className="flex items-center justify-center gap-1 mt-1 text-emerald-400/70"><Shield className="w-3 h-3" /> Secure Razorpay Checkout</span>
+              </p>
+            </div>
           </motion.div>
 
+        </div>
+
+        {/* Competitive Comparison Grid */}
+        <div className="max-w-[1000px] mx-auto mt-32 mb-16">
+          <div className="text-center mb-16">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold tracking-wider uppercase mb-4"
+            >
+              Market Comparison
+            </motion.div>
+            <h3 className="text-3xl md:text-4xl font-black text-white font-playfair tracking-tight mb-4">How We Compare to the Market</h3>
+            <p className="text-slate-400 font-medium max-w-2xl mx-auto text-lg">We provide elite-grade, tailored AI career acceleration services for a fraction of the cost of legacy platforms.</p>
+          </div>
+
+          <div className="overflow-x-auto rounded-3xl border border-slate-800 bg-slate-900/20 backdrop-blur-xl shadow-2xl">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800">
+                  <th className="p-6 text-slate-400 font-semibold text-sm">Feature / Service</th>
+                  <th className="p-6 text-purple-400 font-extrabold text-sm bg-purple-500/5 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500" />
+                    RGJobs PRO 🚀
+                  </th>
+                  <th className="p-6 text-slate-400 font-semibold text-sm">LinkedIn Premium 💎</th>
+                  <th className="p-6 text-slate-400 font-semibold text-sm">Jobscan 🔍</th>
+                  <th className="p-6 text-slate-400 font-semibold text-sm">ChatGPT Free 🤖</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {[
+                  {
+                    feature: "Automated PDF Resume Parser",
+                    us: { check: true, text: "Yes (Gemini-Powered)" },
+                    linkedin: { check: false, text: "No (Bio form only)" },
+                    jobscan: { check: true, text: "Yes" },
+                    chatgpt: { check: false, text: "No (Manual paste)" }
+                  },
+                  {
+                    feature: "ATS Keyword Gap Scores",
+                    us: { check: true, text: "Yes (0-100% Breakdown)" },
+                    linkedin: { check: false, text: "Basic indicators" },
+                    jobscan: { check: true, text: "Yes" },
+                    chatgpt: { check: false, text: "No (Manual ask)" }
+                  },
+                  {
+                    feature: "Contextual Cover Letter",
+                    us: { check: true, text: "Yes (Customized)" },
+                    linkedin: { check: false, text: "No" },
+                    jobscan: { check: false, text: "Templates only" },
+                    chatgpt: { check: true, text: "Generic prompt" }
+                  },
+                  {
+                    feature: "10 Tailored Interview Questions",
+                    us: { check: true, text: "Yes (STAR structure)" },
+                    linkedin: { check: false, text: "Standard sets only" },
+                    jobscan: { check: false, text: "No" },
+                    chatgpt: { check: false, text: "No" }
+                  },
+                  {
+                    feature: "INR Local Salary Benchmarks",
+                    us: { check: true, text: "Yes (INR localized advice)" },
+                    linkedin: { check: false, text: "Premium pool only" },
+                    jobscan: { check: false, text: "No" },
+                    chatgpt: { check: false, text: "No" }
+                  },
+                  {
+                    feature: "Pricing",
+                    us: { check: true, text: "₹199 / 30 Days" },
+                    linkedin: { check: false, text: "₹1,500 - ₹2,500/Mo" },
+                    jobscan: { check: false, text: "₹3,500 / Month" },
+                    chatgpt: { check: false, text: "Free / ₹1,999 (Plus)" }
+                  }
+                ].map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-900/10 transition-colors">
+                    <td className="p-6 text-slate-300 font-bold text-sm leading-relaxed">{row.feature}</td>
+                    <td className="p-6 text-white font-bold text-sm bg-purple-500/5">
+                      <div className="flex items-center gap-2">
+                        {row.us.check ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <X className="w-4 h-4 text-rose-500 shrink-0" />
+                        )}
+                        <span>{row.us.text}</span>
+                      </div>
+                    </td>
+                    <td className="p-6 text-slate-400 font-medium text-sm">
+                      <div className="flex items-center gap-2">
+                        {row.linkedin.check ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <X className="w-4 h-4 text-slate-700 shrink-0" />
+                        )}
+                        <span>{row.linkedin.text}</span>
+                      </div>
+                    </td>
+                    <td className="p-6 text-slate-400 font-medium text-sm">
+                      <div className="flex items-center gap-2">
+                        {row.jobscan.check ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <X className="w-4 h-4 text-slate-700 shrink-0" />
+                        )}
+                        <span>{row.jobscan.text}</span>
+                      </div>
+                    </td>
+                    <td className="p-6 text-slate-400 font-medium text-sm">
+                      <div className="flex items-center gap-2">
+                        {row.chatgpt.check ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <X className="w-4 h-4 text-slate-700 shrink-0" />
+                        )}
+                        <span>{row.chatgpt.text}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Before vs After Demonstration */}
@@ -577,7 +776,7 @@ export default function ProPricing() {
               },
               {
                 q: "How do the AI Match Score credits work?",
-                a: "Free users get exactly 3 free AI match calculations to test the system. When you upgrade to PRO, this limit is completely removed. You enjoy 100% unlimited AI matches, resume optimizations, cover letter downloads, salary benchmarking, and interview prep questions."
+                a: "Every new account starts with 6 AI Match Credits for free. Your very first analysis always costs 0 credits — it's on us, so you can try before committing. After that, each match uses 1 credit. Credits automatically refresh by +1 every week (capped at 6 total), and you can earn a one-time bonus of +3 credits by completing your profile to 80% or more. When you upgrade to PRO, the credit system is completely bypassed — you get 100% unlimited AI matches, cover letter PDF & DOC downloads, salary benchmarking, and interview prep for the 30-day duration of your pass."
               },
               {
                 q: "Do you offer a refund policy?",

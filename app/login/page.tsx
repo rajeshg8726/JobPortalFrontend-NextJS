@@ -81,33 +81,7 @@ export default function Login() {
       }
     } catch (err: any) {
       if (err.message === "Failed to fetch") {
-        // MOCK LOGIN FOR UI DEMONSTRATION IF BACKEND OFFLINE
-        console.warn("Backend offline, triggering mock login for demonstration purposes.");
-        setSuccess(true);
-        localStorage.setItem('token', 'mock_token_123');
-        localStorage.setItem('userType', 'Candidate');
-        const mockUser = { id: 999, fullName: 'Demo Candidate', email: formData.email };
-        localStorage.setItem('candidate', JSON.stringify(mockUser));
-
-        const anonSaved = JSON.parse(localStorage.getItem('savedJobs_anonymous') || '[]');
-        const anonDetails = JSON.parse(localStorage.getItem('savedJobsDetails_anonymous') || '{}');
-        if (anonSaved.length > 0) {
-            const userSavedKey = `savedJobs_999`;
-            const userDetailsKey = `savedJobsDetails_999`;
-            const userSaved = JSON.parse(localStorage.getItem(userSavedKey) || '[]');
-            const userDetails = JSON.parse(localStorage.getItem(userDetailsKey) || '{}');
-            
-            const mergedSaved = Array.from(new Set([...userSaved, ...anonSaved]));
-            const mergedDetails = { ...userDetails, ...anonDetails };
-            
-            localStorage.setItem(userSavedKey, JSON.stringify(mergedSaved));
-            localStorage.setItem(userDetailsKey, JSON.stringify(mergedDetails));
-            
-            localStorage.removeItem('savedJobs_anonymous');
-            localStorage.removeItem('savedJobsDetails_anonymous');
-        }
-
-        setTimeout(() => window.location.href = "/candidate-dashboard", 1500);
+        setError("Unable to connect to the server. Please check your internet connection and try again.");
       } else {
         setError(err.message || 'An error occurred during login.');
       }

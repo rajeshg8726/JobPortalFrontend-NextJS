@@ -2,16 +2,16 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
-import { 
-  Search, 
-  MapPin, 
-  Briefcase, 
-  GraduationCap, 
-  Globe, 
-  Code, 
-  Zap, 
-  Award, 
-  Users, 
+import {
+  Search,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Globe,
+  Code,
+  Zap,
+  Award,
+  Users,
   ChevronRight,
   Sparkles,
   Building
@@ -44,7 +44,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!role && !location && !searchTerm) {
       alert("Please enter at least one search criteria to find your perfect role.");
       return;
@@ -55,13 +55,13 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
 
     try {
       const res = await axios.get(`${backendURL}/api/jobs-search`, {
-        params: { 
-          searchTerm: searchTerm.trim(), 
-          location: location.trim(), 
-          role: role.trim() 
+        params: {
+          searchTerm: searchTerm.trim(),
+          location: location.trim(),
+          role: role.trim()
         },
       });
-      
+
       if (res.data && res.data.length > 0) {
         if (setSearchedJobs) setSearchedJobs(res.data);
         const jobsSection = document.querySelector('.premium-jobcard-container');
@@ -84,7 +84,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
     <div className="w-full flex flex-col font-sora">
       {/* ===== HERO SECTION ===== */}
       <div className="relative w-full min-h-[85vh] flex flex-col items-center justify-center overflow-hidden bg-slate-950 pt-20 pb-16">
-        
+
         {/* Dynamic Image Background */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -95,7 +95,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
             transition={{ duration: 1.5, ease: "easeInOut" }}
             className="absolute inset-0 z-0"
           >
-            <Image 
+            <Image
               src={slides[activeSlide].image}
               alt="Hero Background"
               fill
@@ -110,9 +110,9 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
         <div className="absolute inset-0 z-[2] bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.15),transparent_60%)]" />
 
         <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 flex flex-col items-center mt-10">
-          
+
           {/* Animated Premium Badge */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
@@ -126,7 +126,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
           </motion.div>
 
           {/* Hero Typography */}
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
@@ -137,8 +137,8 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
               sparks your passion.
             </span>
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
@@ -148,36 +148,36 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
           </motion.p>
 
           {/* Unified Glassmorphic Search Pill */}
-          <motion.form 
+          <motion.form
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
             onSubmit={handleSearch}
             className="w-full max-w-[1000px] bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-2 md:p-2.5 shadow-[0_30px_60px_rgba(0,0,0,0.4)] flex flex-col lg:flex-row gap-2 transition-all duration-500 hover:bg-white/10 hover:border-white/20 hover:shadow-[0_30px_80px_rgba(37,99,235,0.15)]"
           >
-            
+
             <div className="flex-1 flex items-center gap-3 px-5 py-3.5 md:py-4 bg-slate-950/50 rounded-2xl group focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/50 transition-all">
               <Briefcase className="w-5 h-5 text-slate-500 group-focus-within:text-blue-400 shrink-0 transition-colors" />
-              <input 
+              <input
                 type="text"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                placeholder="Job Role (e.g. Developer)" 
+                placeholder="Job Role (e.g. Developer)"
                 className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium"
-                disabled={isSearching} 
+                disabled={isSearching}
               />
             </div>
-            
+
             <div className="hidden lg:block w-[1px] h-12 bg-white/10 self-center" />
-            
+
             <div className="flex-[0.8] flex items-center gap-3 px-5 py-3.5 md:py-4 bg-slate-950/50 rounded-2xl group focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/50 transition-all">
               <MapPin className="w-5 h-5 text-slate-500 group-focus-within:text-blue-400 shrink-0 transition-colors" />
-              <input 
+              <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, State, or Remote" 
-                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium" 
+                placeholder="City, State, or Remote"
+                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium"
                 disabled={isSearching}
               />
             </div>
@@ -186,17 +186,17 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
 
             <div className="flex-1 flex items-center gap-3 px-5 py-3.5 md:py-4 bg-slate-950/50 rounded-2xl group focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/50 transition-all">
               <Search className="w-5 h-5 text-slate-500 group-focus-within:text-blue-400 shrink-0 transition-colors" />
-              <input 
+              <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Skills, Keywords, etc." 
-                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium" 
+                placeholder="Skills, Keywords, etc."
+                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium"
                 disabled={isSearching}
               />
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={isSearching}
               className="lg:ml-2 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl px-8 py-4 font-bold text-[15px] flex items-center justify-center gap-2.5 transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none min-w-[140px]"
@@ -213,9 +213,9 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
               )}
             </button>
           </motion.form>
-          
+
           {/* Quick Trending Filters */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.6 }}
@@ -262,6 +262,184 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
         </div>
       </div>
 
+      {/* ===== HOW IT WORKS ===== */}
+      <section className="py-24 bg-white dark:bg-slate-900">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest mb-5">
+              <Sparkles className="w-3.5 h-3.5" /> Simple & Transparent
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white font-playfair tracking-tight mb-4">
+              Land your dream job in<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">3 simple steps</span>
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto font-medium">
+              No middlemen. No application fees. No hidden subscriptions. Just you and your dream job.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Step 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0 }}
+              className="relative bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-8 hover:border-blue-200 dark:hover:border-blue-500/30 hover:shadow-xl transition-all duration-300 group"
+            >
+              <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-black flex items-center justify-center shadow-lg">01</div>
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Search className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Search Any Role</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Browse thousands of real job listings aggregated directly from official company career pages — updated daily.</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-wider">✓ Always Free</span>
+            </motion.div>
+
+            {/* Step 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="relative bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-8 hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-xl transition-all duration-300 group"
+            >
+              <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center shadow-lg">02</div>
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Zap className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Get AI Match Score</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Our AI instantly tells you your match % for any job, missing ATS keywords, a tailored cover letter, and interview prep questions.</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-black uppercase tracking-wider">✓ 6 Credits Free</span>
+            </motion.div>
+
+            {/* Step 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="relative bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-8 hover:border-purple-200 dark:hover:border-purple-500/30 hover:shadow-xl transition-all duration-300 group"
+            >
+              <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center shadow-lg">03</div>
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Building className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Apply Directly</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">One click takes you to the employer's official career page. We never intercept, charge, or collect your application data.</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 text-[11px] font-black uppercase tracking-wider">✓ 100% Transparent</span>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FREE FEATURES SHOWCASE ===== */}
+      <section className="py-24 bg-slate-950 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)] pointer-events-none" />
+
+        <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-5">
+              <Award className="w-3.5 h-3.5" /> Everything Free on Signup
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-white font-playfair tracking-tight mb-4">
+              What you get for{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">absolutely free</span>
+            </h2>
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
+              Create a free account in 30 seconds and unlock all of this — no credit card required, ever.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { icon: "🔍", title: "Unlimited Job Browsing", desc: "Browse thousands of live job listings from top companies. No login needed to search.", tag: "Always Free" },
+              { icon: "🤖", title: "6 AI Match Credits", desc: "Every new account gets 6 AI credits to analyze your profile against real job descriptions and get a match score.", tag: "On Signup" },
+              { icon: "✨", title: "First Analysis Free", desc: "Your very first AI match always costs zero credits. Try it completely risk-free before spending anything.", tag: "Zero Risk" },
+              { icon: "🔄", title: "Weekly Credit Refresh", desc: "+1 credit is added every week automatically (capped at 6). Come back weekly and you will always have credits.", tag: "Auto Refresh" },
+              { icon: "🎯", title: "Profile Completion Bonus", desc: "Fill your profile to 80% and earn a one-time bonus of +3 extra AI Match Credits — rewarding better matches.", tag: "+3 Bonus Credits" },
+              { icon: "🔒", title: "Direct Official Applications", desc: "Every Apply click takes you to the employer's real career page. We never store or forward your CV or data.", tag: "100% Transparent" },
+            ].map(({ icon, title, desc, tag }, i) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="bg-slate-900/60 border border-slate-800 rounded-[1.75rem] p-7 hover:border-slate-700 hover:bg-slate-900 transition-all duration-300 group"
+              >
+                <div className="text-4xl mb-5">{icon}</div>
+                <h3 className="text-lg font-black text-white mb-2 group-hover:text-blue-400 transition-colors">{title}</h3>
+                <p className="text-slate-400 text-[14px] font-medium leading-relaxed mb-5">{desc}</p>
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider">✓ {tag}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="mt-14 text-center"
+          >
+            <Link
+              href="/role-selection"
+              className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-[15px] shadow-[0_0_40px_rgba(99,102,241,0.3)] hover:shadow-[0_0_50px_rgba(99,102,241,0.5)] hover:-translate-y-0.5 transition-all"
+            >
+              <Users className="w-5 h-5" />
+              Create Free Account — No Card Needed
+              <ChevronRight className="w-5 h-5" />
+            </Link>
+            <p className="text-slate-500 text-sm font-medium mt-4">
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-bold hover:underline">Sign in →</Link>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== AGGREGATOR TRANSPARENCY BANNER ===== */}
+      <section className="py-12 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-blue-50 dark:bg-slate-950 border border-blue-100 dark:border-blue-500/20 rounded-3xl p-7 md:p-10"
+          >
+            <div className="w-16 h-16 shrink-0 rounded-2xl bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Globe className="w-8 h-8" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1.5">
+                🛡️ Honest Disclosure — We are a Job Aggregator
+              </p>
+              <p className="text-slate-700 dark:text-slate-300 font-medium text-[15px] leading-relaxed">
+                RGJobs curates job listings from official company career pages across the internet. When you click Apply, you are taken <strong>directly to the employer&apos;s official website</strong> — we never intercept, store, or forward your application. There are no hidden fees, no middlemen, and no lock-in. <strong>Your job search stays 100% in your control.</strong>
+              </p>
+            </div>
+            <Link
+              href="/pro"
+              className="shrink-0 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 whitespace-nowrap"
+            >
+              See AI Features →
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ===== EXPLORE CATEGORIES ===== */}
       <section className="py-20 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-[1200px] mx-auto px-6">
@@ -274,9 +452,9 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
               Browse all <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
+
             <Link href="/jobsbyrole/software-developer-engineer-role" className="group p-8 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-500/30 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] dark:hover:shadow-[0_20px_40px_rgba(37,99,235,0.05)] transition-all duration-300">
               <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:bg-blue-600 group-hover:text-white">
                 <Code className="w-7 h-7" />

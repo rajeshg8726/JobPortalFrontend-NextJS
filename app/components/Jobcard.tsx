@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import ReactPaginate from "react-paginate";
 import slugify from "react-slugify";
@@ -51,10 +51,25 @@ const Toast = ({ message, type, onClose }: any) => {
 };
 
 export default function Jobcard(props: any) {
-  const [currentPage, setCurrentPage] = useState(0);
+  // Read initial page state from sessionStorage if it exists
+  const getSessionState = (key: string, fallback: any) => {
+    if (typeof window === 'undefined') return fallback;
+    const val = sessionStorage.getItem(key);
+    if (val === null) return fallback;
+    try {
+      return JSON.parse(val);
+    } catch(e) {
+      return val;
+    }
+  };
+
+  const [currentPage, setCurrentPage] = useState(() => getSessionState('home_currentPage', 0));
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const isFirstMount = useRef(true);
+  const prevAllJobsLength = useRef(0);
+  const prevSearchedJobsRef = useRef<any[] | null>(null);
   const [jobStats, setJobStats] = useState({
     total: 0,
     newToday: 0,
@@ -73,6 +88,37 @@ export default function Jobcard(props: any) {
     }
   }, []);
 
+  // Sync page update to sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('home_currentPage', JSON.stringify(currentPage));
+    }
+  }, [currentPage]);
+
+  // Reset page to 0 if a fresh search is triggered (avoiding resetting on initial async fetch)
+  useEffect(() => {
+    const allJobsLength = props.allJobs?.length || 0;
+    const searchedJobs = props.searchedJobs || null;
+
+    // 1. If this is the initial async fetch of all jobs completing, do NOT reset page
+    if (prevAllJobsLength.current === 0 && allJobsLength > 0) {
+      prevAllJobsLength.current = allJobsLength;
+      prevSearchedJobsRef.current = searchedJobs;
+      return;
+    }
+
+    // 2. If a search was actually triggered (transitioned from null to an array, or changed arrays)
+    const searchChanged = prevSearchedJobsRef.current !== searchedJobs;
+    
+    if (searchChanged) {
+      setCurrentPage(0);
+    }
+
+    prevAllJobsLength.current = allJobsLength;
+    prevSearchedJobsRef.current = searchedJobs;
+  }, [props.searchedJobs, props.allJobs]);
+
+  // Handle pagination click on the home page
   const handlePageClick = ({ selected }: any) => {
     setCurrentPage(selected);
   };
@@ -101,6 +147,17 @@ export default function Jobcard(props: any) {
   };
 
   const isUrgentHiring = (post: any) => post.urgent_hiring || post.is_urgent || post.urgent || false;
+
+  const getJobFreshness = (dateString: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor(Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 3) return { label: 'New', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+    if (diffDays <= 7) return { label: 'This Week', color: 'bg-blue-50 text-blue-600 border-blue-100' };
+    if (diffDays > 30) return { label: 'May Be Closed', color: 'bg-rose-50 text-rose-600 border-rose-100' };
+    return null;
+  };
 
   const isRemote = (job: any) => job.location && (
     job.location.toLowerCase().includes('remote') ||
@@ -418,8 +475,8 @@ export default function Jobcard(props: any) {
             >
               
               {/* Top Tags row */}
-              <div className="flex items-center justify-between mb-5 h-8">
-                <div className="flex gap-2">
+              <div className="flex items-center justify-between mb-5 min-h-[32px]">
+                <div className="flex gap-2 flex-wrap">
                   {isFeatured(post) && (
                     <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold tracking-wide uppercase border border-amber-100">
                       <Star className="w-3.5 h-3.5" /> Featured
@@ -430,6 +487,16 @@ export default function Jobcard(props: any) {
                       <Clock className="w-3.5 h-3.5" /> Urgent
                     </div>
                   )}
+                  {(() => {
+                    const freshness = getJobFreshness(post.created_at);
+                    if (!freshness) return null;
+                    return (
+                      <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase border ${freshness.color}`}>
+                        {freshness.label === 'New' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                        {freshness.label}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <button 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import ReactPaginate from "react-paginate";
 import slugify from "react-slugify";
@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, Wallet, Briefcase, Calendar, Share2, Clock, 
   Building2, Star, ExternalLink, Search, Bookmark, 
-  CheckCircle2, Filter, GraduationCap, ChevronLeft, ChevronRight, X
+  CheckCircle2, Filter, GraduationCap, ChevronLeft, ChevronRight, X,
+  WifiOff, RefreshCw
 } from "lucide-react";
 
 export interface JobsBrowserProps {
@@ -46,19 +47,35 @@ const Toast = ({ message, type, onClose }: any) => {
 export default function JobsBrowser(props: JobsBrowserProps) {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+
+  // Read initial state from sessionStorage if it exists, otherwise fall back to props/defaults
+  const getSessionState = (key: string, fallback: any) => {
+    if (typeof window === 'undefined') return fallback;
+    const val = sessionStorage.getItem(key);
+    if (val === null) return fallback;
+    try {
+      return JSON.parse(val);
+    } catch(e) {
+      return val;
+    }
+  };
   
   // Pagination
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(() => getSessionState('jobs_currentPage', 0));
   const [totalPages, setTotalPages] = useState(0);
   const [totalJobs, setTotalJobs] = useState(0);
 
   // Filters State
-  const [searchTerm, setSearchTerm] = useState(props.initialSearch || "");
-  const [locations, setLocations] = useState<string[]>(props.initialLocations || []);
-  const [roles, setRoles] = useState<string[]>(props.initialRoles || []);
-  const [batches, setBatches] = useState<string[]>(props.initialBatches || []);
-  const [experience, setExperience] = useState<string[]>(props.initialExperience || []);
-  const [jobType, setJobType] = useState<string[]>(props.initialJobType || []);
+  const [searchTerm, setSearchTerm] = useState(() => getSessionState('jobs_searchTerm', props.initialSearch || ""));
+  const [locations, setLocations] = useState<string[]>(() => getSessionState('jobs_locations', props.initialLocations || []));
+  const [roles, setRoles] = useState<string[]>(() => getSessionState('jobs_roles', props.initialRoles || []));
+  const [batches, setBatches] = useState<string[]>(() => getSessionState('jobs_batches', props.initialBatches || []));
+  const [experience, setExperience] = useState<string[]>(() => getSessionState('jobs_experience', props.initialExperience || []));
+  const [jobType, setJobType] = useState<string[]>(() => getSessionState('jobs_jobType', props.initialJobType || []));
+
+  const isFirstMount = useRef(true);
+  const prevFiltersRef = useRef("");
 
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
   const [toastMessage, setToastMessage] = useState<{msg: string, type: string} | null>(null);
@@ -72,6 +89,19 @@ export default function JobsBrowser(props: JobsBrowserProps) {
       setSavedJobs(JSON.parse(saved));
     }
   }, []);
+
+  // Sync state changes to sessionStorage for back-button navigation persistence
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('jobs_currentPage', JSON.stringify(currentPage));
+      sessionStorage.setItem('jobs_searchTerm', JSON.stringify(searchTerm));
+      sessionStorage.setItem('jobs_locations', JSON.stringify(locations));
+      sessionStorage.setItem('jobs_roles', JSON.stringify(roles));
+      sessionStorage.setItem('jobs_batches', JSON.stringify(batches));
+      sessionStorage.setItem('jobs_experience', JSON.stringify(experience));
+      sessionStorage.setItem('jobs_jobType', JSON.stringify(jobType));
+    }
+  }, [currentPage, searchTerm, locations, roles, batches, experience, jobType]);
 
   const fetchJobs = useCallback(async (page: number) => {
     setLoading(true);
@@ -102,8 +132,10 @@ export default function JobsBrowser(props: JobsBrowserProps) {
         setTotalPages(Math.ceil(data.length / 10));
         setTotalJobs(data.length);
       }
+      setFetchError(false);
     } catch (error) {
       console.error("Failed to fetch jobs", error);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -111,11 +143,25 @@ export default function JobsBrowser(props: JobsBrowserProps) {
 
   // Debounce filter changes
   useEffect(() => {
-    setCurrentPage(0); // Reset to page 0 on filter change
-    const timer = setTimeout(() => {
-      fetchJobs(0);
-    }, 400); // 400ms debounce
-    return () => clearTimeout(timer);
+    const currentFiltersStr = JSON.stringify({ searchTerm, locations, roles, batches, experience, jobType });
+
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      prevFiltersRef.current = currentFiltersStr;
+      fetchJobs(currentPage);
+      return;
+    }
+
+    const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
+    prevFiltersRef.current = currentFiltersStr;
+
+    if (filtersChanged) {
+      setCurrentPage(0); // Reset to page 0 on filter change
+      const timer = setTimeout(() => {
+        fetchJobs(0);
+      }, 400); // 400ms debounce
+      return () => clearTimeout(timer);
+    }
   }, [searchTerm, locations, roles, batches, experience, jobType, fetchJobs]);
 
   const handlePageClick = ({ selected }: any) => {
@@ -210,6 +256,17 @@ export default function JobsBrowser(props: JobsBrowserProps) {
     job.location.toLowerCase().includes('work from home') ||
     job.location.toLowerCase().includes('wfh')
   );
+
+  const getJobFreshness = (dateString: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor(Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 3) return { label: 'New', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+    if (diffDays <= 7) return { label: 'This Week', color: 'bg-blue-50 text-blue-600 border-blue-100' };
+    if (diffDays > 30) return { label: 'May Be Closed', color: 'bg-rose-50 text-rose-600 border-rose-100' };
+    return null;
+  };
 
   const formatSalary = (salary: string) => {
     if (!salary) return "Not disclosed";
@@ -411,6 +468,21 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                     </div>
                  ))}
               </div>
+            ) : fetchError ? (
+              // Error State
+              <div className="w-full py-24 flex flex-col items-center justify-center text-center bg-white border border-rose-200 border-dashed rounded-[2rem]">
+                <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center text-rose-400 mb-6 border border-rose-100">
+                  <WifiOff className="w-10 h-10" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2 font-playfair">Unable to load jobs</h3>
+                <p className="text-slate-500 font-medium max-w-sm mb-6">Please check your internet connection and try again. If the problem persists, contact us.</p>
+                <button 
+                  onClick={() => fetchJobs(currentPage)} 
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg"
+                >
+                  <RefreshCw className="w-4 h-4" /> Retry
+                </button>
+              </div>
             ) : jobs.length === 0 ? (
               // Empty State
               <div className="w-full py-24 flex flex-col items-center justify-center text-center bg-white border border-slate-200 border-dashed rounded-[2rem]">
@@ -440,8 +512,8 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                         }`}
                         key={post.id}
                       >
-                         <div className="flex items-center justify-between mb-5 h-8">
-                            <div className="flex gap-2">
+                         <div className="flex items-center justify-between mb-5 min-h-[32px]">
+                            <div className="flex gap-2 flex-wrap">
                               {isFeatured(post) && (
                                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold tracking-wide uppercase border border-amber-100">
                                   <Star className="w-3.5 h-3.5" /> Featured
@@ -452,6 +524,16 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                                   <Clock className="w-3.5 h-3.5" /> Urgent
                                 </div>
                               )}
+                              {(() => {
+                                const freshness = getJobFreshness(post.created_at);
+                                if (!freshness) return null;
+                                return (
+                                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase border ${freshness.color}`}>
+                                    {freshness.label === 'New' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                    {freshness.label}
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <button 
                               onClick={() => toggleSaveJob(post)}
