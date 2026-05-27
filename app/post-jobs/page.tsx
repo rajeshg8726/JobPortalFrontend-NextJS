@@ -65,12 +65,12 @@ export default function PostJobsGateway() {
               
               <div className="mt-14 flex items-center gap-8 border-t border-slate-100 pt-8">
                 <div className="flex flex-col">
-                  <span className="text-3xl font-black text-slate-900">1K+</span>
-                  <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wide">Candidates</span>
+                  <span className="text-3xl font-black text-slate-900">Direct</span>
+                  <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wide">Apply to Companies</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-3xl font-black text-slate-900">24hr</span>
-                  <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wide">Avg Time to Match</span>
+                  <span className="text-3xl font-black text-slate-900">100%</span>
+                  <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wide">Transparent Process</span>
                 </div>
               </div>
             </div>

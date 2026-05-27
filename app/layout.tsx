@@ -27,7 +27,7 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
   description:
-    "Discover 1000+ curated tech jobs from top Indian companies. Free ATS keyword analysis, AI cover letter generator, STAR interview prep, and INR salary benchmarks. Apply directly on employer sites — zero middlemen, 100% transparent.",
+    "Curated tech jobs sourced directly from official company career pages. Free ATS keyword analysis, AI cover letter generator, STAR interview prep, and INR salary benchmarks. Apply directly on employer sites — zero middlemen, 100% transparent.",
   keywords: [
     "jobs",
     "job portal",
@@ -45,16 +45,25 @@ export const metadata: Metadata = {
   openGraph: {
     title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
     description:
-      "Free ATS keyword analysis, AI cover letters, interview prep & salary benchmarks. 1000+ curated tech jobs from top companies.",
+      "Free ATS keyword analysis, AI cover letters, interview prep & salary benchmarks. Curated tech jobs from top companies — apply directly.",
     type: "website",
     url: "https://www.rgjobs.in",
     siteName: "RGJobs",
+    images: [
+      {
+        url: "https://www.rgjobs.in/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "RGJobs — AI-Powered Job Portal",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
     description:
-      "Free ATS keyword analysis, AI cover letters, and 1000+ curated tech jobs. Apply directly — 100% transparent.",
+      "Free ATS keyword analysis, AI cover letters, and curated tech jobs. Apply directly — 100% transparent.",
+    images: ["https://www.rgjobs.in/og-image.png"],
   },
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import {
   Search,
@@ -14,33 +14,32 @@ import {
   Users,
   ChevronRight,
   Sparkles,
-  Building
+  Building,
+  Shield
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function Slider({ setSearchedJobs, setLoading }: any) {
+export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [role, setRole] = useState("");
-  const [activeSlide, setActiveSlide] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
 
   const backendURL = process.env.NEXT_PUBLIC_API_URL;
 
-  const slides = [
-    { image: "/t1.webp" },
-    { image: "/t2.webp" }
-  ];
-
-  // Auto-rotate background
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
+  // Compute real stats from actual job data — zero fake numbers
+  const realStats = useMemo(() => {
+    const jobs = allJobs || [];
+    const totalJobs = jobs.length;
+    const uniqueCompanies = new Set(jobs.map((j: any) => j.title?.toLowerCase?.()?.trim?.())).size;
+    const remoteJobs = jobs.filter((j: any) => 
+      j.location?.toLowerCase?.()?.includes?.('remote') ||
+      j.location?.toLowerCase?.()?.includes?.('work from home') ||
+      j.location?.toLowerCase?.()?.includes?.('wfh')
+    ).length;
+    return { totalJobs, uniqueCompanies, remoteJobs };
+  }, [allJobs]);
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,29 +84,14 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
       {/* ===== HERO SECTION ===== */}
       <div className="relative w-full min-h-[85vh] flex flex-col items-center justify-center overflow-hidden bg-slate-950 pt-20 pb-16">
 
-        {/* Dynamic Image Background */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeSlide}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 z-0"
-          >
-            <Image
-              src={slides[activeSlide].image}
-              alt="Hero Background"
-              fill
-              priority
-              className="object-cover opacity-60"
-            />
-          </motion.div>
-        </AnimatePresence>
+        {/* Animated Gradient Background — no external images needed */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-950 via-blue-950/40 to-slate-950" />
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-[-20%] left-[-15%] w-[500px] h-[500px] rounded-full bg-indigo-600/8 blur-[100px] pointer-events-none" />
+        <div className="absolute top-[30%] left-[40%] w-[300px] h-[300px] rounded-full bg-purple-600/5 blur-[80px] pointer-events-none" />
 
-        {/* Sophisticated Gradient Mask */}
-        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950" />
-        <div className="absolute inset-0 z-[2] bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.15),transparent_60%)]" />
+        {/* Subtle Grid Pattern */}
+        <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.15),transparent_60%)]" />
 
         <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 flex flex-col items-center mt-10">
 
@@ -240,24 +224,24 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
         </div>
       </div>
 
-      {/* ===== TRUST BAR ===== */}
+      {/* ===== TRUST BAR — Real Data Only ===== */}
       <div className="w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mt-0">
         <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800/60">
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
-            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">1k+</span>
+            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{realStats.totalJobs}+</span>
             <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Active Jobs</span>
           </div>
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
-            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">500+</span>
-            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Top Companies</span>
+            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{realStats.uniqueCompanies}+</span>
+            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Companies Hiring</span>
           </div>
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
-            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">10k+</span>
-            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Global Users</span>
+            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{realStats.remoteJobs}+</span>
+            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Remote Roles</span>
           </div>
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
             <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">100%</span>
-            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Free Access</span>
+            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Direct Apply</span>
           </div>
         </div>
       </div>
@@ -298,7 +282,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
                 <Search className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Search Any Role</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Browse thousands of real job listings aggregated directly from official company career pages — updated daily.</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Browse curated job listings sourced directly from official company career pages — updated regularly.</p>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-wider">✓ Always Free</span>
             </motion.div>
 
@@ -460,7 +444,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
                 <Code className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Software Development</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium">100+ Elite engineering roles</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Curated engineering roles</p>
             </Link>
 
             <Link href="/jobsbyrole/data-scientist-role" className="group p-8 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-500/30 hover:shadow-[0_20px_40px_rgba(168,85,247,0.08)] transition-all duration-300">
@@ -468,7 +452,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
                 <Zap className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Data Science & AI</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium">100+ Future-ready positions</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">AI & ML career paths</p>
             </Link>
 
             <Link href="/jobs/Remote-Jobs" className="group p-8 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:shadow-[0_20px_40px_rgba(16,185,129,0.08)] transition-all duration-300">
@@ -476,7 +460,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
                 <Globe className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Remote Opportunities</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium">100+ Work from anywhere</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Work from anywhere</p>
             </Link>
 
             <Link href="/jobs/2025-batch" className="group p-8 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-200 dark:hover:border-amber-500/30 hover:shadow-[0_20px_40px_rgba(245,158,11,0.08)] transition-all duration-300">
@@ -492,7 +476,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
                 <Award className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Top Internships</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium">100+ Kickstart your career</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Kickstart your career</p>
             </Link>
 
             <Link href="/jobsbytype/Freshers-jobs" className="group p-8 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-cyan-200 dark:hover:border-cyan-500/30 hover:shadow-[0_20px_40px_rgba(6,182,212,0.08)] transition-all duration-300">
@@ -500,7 +484,7 @@ export default function Slider({ setSearchedJobs, setLoading }: any) {
                 <GraduationCap className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Freshers Hiring</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium">100+ Entry-level positions</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">Entry-level positions</p>
             </Link>
 
           </div>

@@ -10,7 +10,7 @@ export default function HomeClient({ initialJobs }: { initialJobs: any[] }) {
 
   return (
     <>
-      <Slider setSearchedJobs={setSearchedJobs} setLoading={setLoading} />
+      <Slider setSearchedJobs={setSearchedJobs} setLoading={setLoading} allJobs={initialJobs} />
       <div className="w-full relative bg-slate-50 dark:bg-slate-950">
         <Jobcard
           allJobs={initialJobs}
