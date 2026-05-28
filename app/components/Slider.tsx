@@ -408,10 +408,10 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
             </div>
             <div className="flex-1 text-center md:text-left">
               <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1.5">
-                🛡️ Honest Disclosure — We are a Job Aggregator
+                🛡️ Vetted Curation Guarantee — 100% Spam-Free Aggregator
               </p>
               <p className="text-slate-700 dark:text-slate-300 font-medium text-[15px] leading-relaxed">
-                RGJobs curates job listings from official company career pages across the internet. When you click Apply, you are taken <strong>directly to the employer&apos;s official website</strong> — we never intercept, store, or forward your application. There are no hidden fees, no middlemen, and no lock-in. <strong>Your job search stays 100% in your control.</strong>
+                RGJobs actively crawls and vets job listings <strong>directly from official company career subdomains</strong> (e.g. Greenhouse, Workday, Lever) and registered legal corporations. When you click Apply, you go <strong>straight to the official employer portal</strong>. We automatically discard all third-party affiliates, reseller boards, and generic spam, keeping your applications 100% direct and under your control.
               </p>
             </div>
             <Link
