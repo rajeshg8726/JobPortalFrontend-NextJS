@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Bookmark, User, LogOut, ChevronRight, MapPin, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Bookmark, User, LogOut, ChevronRight, MapPin, Sparkles, Target, Activity } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Overview', href: '/candidate-dashboard', exact: true, icon: LayoutDashboard },
+  { label: 'Application Tracker', href: '/candidate-dashboard/tracker', exact: false, icon: Target, isNew: true },
+  { label: 'Resume Health', href: '/resume-health', exact: false, icon: Activity },
   { label: 'Saved Jobs', href: '/candidate-dashboard/saved-jobs', exact: false, icon: Bookmark },
   { label: 'Profile Settings', href: '/candidate-dashboard/settings', exact: false, icon: User },
 ];
@@ -164,7 +166,7 @@ export default function CandidateDashboardLayout({ children }: { children: React
 
             {/* Navigation */}
             <nav className="p-3 flex flex-col gap-1">
-              {NAV_ITEMS.map(({ label, href, exact, icon: Icon }) => {
+              {NAV_ITEMS.map(({ label, href, exact, icon: Icon, isNew }) => {
                 const isActive = exact ? pathname === href : pathname?.startsWith(href);
                 return (
                   <Link
@@ -178,6 +180,11 @@ export default function CandidateDashboardLayout({ children }: { children: React
                   >
                     <Icon className={`w-5 h-5 ${isActive ? 'opacity-90' : 'opacity-60'}`} />
                     <span className="flex-1">{label}</span>
+                    {isNew && !isActive && (
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase tracking-widest rounded-md border border-rose-500/20 animate-pulse">
+                        New
+                      </span>
+                    )}
                     {isActive && <ChevronRight className="w-4 h-4 opacity-40" />}
                   </Link>
                 );

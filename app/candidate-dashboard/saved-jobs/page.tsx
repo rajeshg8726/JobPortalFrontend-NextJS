@@ -27,18 +27,43 @@ export default function SavedJobsPage() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
     
-    // savedJobsDetails stores { [id]: fullJobObject }
+    // Load from local cache for instant render
     const details: Record<string, SavedJob> = JSON.parse(localStorage.getItem(`savedJobsDetails_${userId}`) || '{}');
-    // savedJobs stores ordered array of IDs
     const ids: number[] = JSON.parse(localStorage.getItem(`savedJobs_${userId}`) || '[]');
     const jobs = ids.map(id => details[String(id)]).filter(Boolean);
     setSavedJobs(jobs);
+
+    // Sync fresh list from database in background
+    if (token && user?.id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/saved-jobs`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setSavedJobs(data.saved_jobs);
+          localStorage.setItem(`savedJobs_${userId}`, JSON.stringify(data.saved_job_ids));
+          
+          const detailsMap: Record<string, any> = {};
+          data.saved_jobs.forEach((j: any) => {
+            detailsMap[String(j.id)] = j;
+          });
+          localStorage.setItem(`savedJobsDetails_${userId}`, JSON.stringify(detailsMap));
+        }
+      })
+      .catch(err => console.error('Failed to sync saved jobs from database:', err));
+    }
   }, []);
 
   const removeJob = (jobId: number) => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
     const savedKey = `savedJobs_${userId}`;
     const detailsKey = `savedJobsDetails_${userId}`;
 
@@ -50,6 +75,18 @@ export default function SavedJobsPage() {
     const details: Record<string, SavedJob> = JSON.parse(localStorage.getItem(detailsKey) || '{}');
     delete details[String(jobId)];
     localStorage.setItem(detailsKey, JSON.stringify(details));
+
+    // Sync with backend database
+    if (token && user?.id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/jobs/${jobId}/save`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .catch(err => console.error('Failed to sync unsave action to database:', err));
+    }
   };
 
   const formatSalary = (s?: string) => {

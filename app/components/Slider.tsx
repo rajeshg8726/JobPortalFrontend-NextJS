@@ -15,7 +15,17 @@ import {
   ChevronRight,
   Sparkles,
   Building,
-  Shield
+  Shield,
+  ArrowRight,
+  Layers,
+  TrendingUp,
+  BarChart3,
+  Target,
+  Lock,
+  CheckCircle2,
+  Activity,
+  Radar,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +43,7 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
     const jobs = allJobs || [];
     const totalJobs = jobs.length;
     const uniqueCompanies = new Set(jobs.map((j: any) => j.title?.toLowerCase?.()?.trim?.())).size;
-    const remoteJobs = jobs.filter((j: any) => 
+    const remoteJobs = jobs.filter((j: any) =>
       j.location?.toLowerCase?.()?.includes?.('remote') ||
       j.location?.toLowerCase?.()?.includes?.('work from home') ||
       j.location?.toLowerCase?.()?.includes?.('wfh')
@@ -81,172 +91,394 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
 
   return (
     <div className="w-full flex flex-col font-sora">
-      {/* ===== HERO SECTION ===== */}
-      <div className="relative w-full min-h-[85vh] flex flex-col items-center justify-center overflow-hidden bg-slate-950 pt-20 pb-16">
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 1: HERO — Career Intelligence Platform (Above the Fold)
+          ═══════════════════════════════════════════════════════════════════ */}
+      <div className="relative w-full min-h-[92vh] flex flex-col items-center justify-center overflow-hidden bg-slate-950 pt-20 pb-16">
 
-        {/* Animated Gradient Background — no external images needed */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-950 via-blue-950/40 to-slate-950" />
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none animate-pulse" />
-        <div className="absolute bottom-[-20%] left-[-15%] w-[500px] h-[500px] rounded-full bg-indigo-600/8 blur-[100px] pointer-events-none" />
-        <div className="absolute top-[30%] left-[40%] w-[300px] h-[300px] rounded-full bg-purple-600/5 blur-[80px] pointer-events-none" />
+        {/* Cinematic Gradient Background */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-950 via-blue-950/30 to-slate-950" />
+        <div className="absolute top-[-15%] right-[-8%] w-[700px] h-[700px] rounded-full bg-blue-600/8 blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/6 blur-[120px] pointer-events-none" />
+        <div className="absolute top-[40%] left-[50%] w-[400px] h-[400px] rounded-full bg-violet-600/4 blur-[100px] pointer-events-none" />
 
-        {/* Subtle Grid Pattern */}
-        <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.15),transparent_60%)]" />
+        {/* Subtle radial spotlight */}
+        <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_30%_20%,rgba(37,99,235,0.08),transparent_50%)]" />
 
-        <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 flex flex-col items-center mt-10">
+        <div className="relative z-10 w-full max-w-[1250px] mx-auto px-6 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
 
-          {/* Animated Premium Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-[11px] sm:text-xs font-bold tracking-widest uppercase mb-8 backdrop-blur-md shadow-[0_0_20px_rgba(37,99,235,0.15)] ring-1 ring-blue-500/20"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            Accelerate your career
-          </motion.div>
+            {/* ── LEFT COLUMN: Platform Messaging ── */}
+            <div className="lg:col-span-6 space-y-7 text-left flex flex-col justify-center">
 
-          {/* Hero Typography */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-black text-white text-center tracking-tight mb-6 font-playfair leading-[1.1]"
-          >
-            Find the role that <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 animate-gradient-x">
-              sparks your passion.
-            </span>
-          </motion.h1>
+              {/* Platform Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/8 text-blue-300 text-[11px] font-bold tracking-[0.15em] uppercase w-fit backdrop-blur-md"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                Career Intelligence Platform
+              </motion.div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-slate-400 text-base sm:text-lg md:text-xl text-center max-w-2xl mb-12 font-medium leading-relaxed px-4"
-          >
-            Discover exceptional opportunities at the world's most innovative companies. Your next elite career move starts exactly here.
-          </motion.p>
+              {/* Hero Headline — CRED-level minimal */}
+              <motion.h1
+                initial={{ opacity: 0, y: 25 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.1 }}
+                className="text-4xl sm:text-5xl md:text-[60px] font-black text-white tracking-tight leading-[1.08] font-playfair"
+              >
+                Your career,{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-violet-400">
+                  managed.
+                </span>
+              </motion.h1>
 
-          {/* Unified Glassmorphic Search Pill */}
-          <motion.form
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            onSubmit={handleSearch}
-            className="w-full max-w-[1000px] bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-2 md:p-2.5 shadow-[0_30px_60px_rgba(0,0,0,0.4)] flex flex-col lg:flex-row gap-2 transition-all duration-500 hover:bg-white/10 hover:border-white/20 hover:shadow-[0_30px_80px_rgba(37,99,235,0.15)]"
-          >
+              {/* Sub-heading — explains the value */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="text-slate-400 text-[17px] leading-relaxed font-medium max-w-[520px]"
+              >
+                Stop applying blindly. Audit your resume against ATS filters, uncover skill gaps with AI, track your applications, and get personalized interview coaching — all in one secure workspace.
+              </motion.p>
 
-            <div className="flex-1 flex items-center gap-3 px-5 py-3.5 md:py-4 bg-slate-950/50 rounded-2xl group focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/50 transition-all">
-              <Briefcase className="w-5 h-5 text-slate-500 group-focus-within:text-blue-400 shrink-0 transition-colors" />
-              <input
-                type="text"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                placeholder="Job Role (e.g. Developer)"
-                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium"
-                disabled={isSearching}
-              />
+              {/* Two CTAs */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2"
+              >
+                <Link
+                  href="/resume-health"
+                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-[15px] shadow-[0_0_40px_rgba(59,130,246,0.25)] hover:shadow-[0_0_50px_rgba(59,130,246,0.4)] hover:-translate-y-0.5 transition-all"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Get Your Career Score — Free
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+                <a
+                  href="#opportunity-radar"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white font-bold text-[14px] transition-all backdrop-blur-sm"
+                >
+                  <Radar className="w-4 h-4 text-slate-400" />
+                  Explore Opportunities
+                </a>
+              </motion.div>
+
+              {/* Micro trust signals */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-slate-500 font-semibold pt-2"
+              >
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> No credit card needed</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-blue-400" /> Zero data selling</span>
+                <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-violet-400" /> 100% direct apply</span>
+              </motion.div>
             </div>
 
-            <div className="hidden lg:block w-[1px] h-12 bg-white/10 self-center" />
+            {/* ── RIGHT COLUMN: Career Intelligence Dashboard Mockup ── */}
+            <div className="lg:col-span-6 w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.25 }}
+                className="w-full bg-slate-900/60 border border-white/8 rounded-[2.5rem] p-6 sm:p-8 backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:border-blue-500/15 transition-all duration-500"
+              >
+                {/* Ambient glows */}
+                <div className="absolute -top-16 -right-16 w-40 h-40 bg-blue-500/8 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/15 transition-all duration-700" />
+                <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-indigo-500/6 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/12 transition-all duration-700" />
 
-            <div className="flex-[0.8] flex items-center gap-3 px-5 py-3.5 md:py-4 bg-slate-950/50 rounded-2xl group focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/50 transition-all">
-              <MapPin className="w-5 h-5 text-slate-500 group-focus-within:text-blue-400 shrink-0 transition-colors" />
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, State, or Remote"
-                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium"
-                disabled={isSearching}
-              />
+                {/* Dashboard header */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-[10px] font-black text-blue-400/70 uppercase tracking-[0.15em] block">Career Intelligence</span>
+                      <h4 className="text-[15px] font-black text-white leading-tight">Your Dashboard</h4>
+                    </div>
+                  </div>
+                  <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Live</span>
+                  </div>
+                </div>
+
+                {/* Career Score + Market Pulse + Skill Gaps — 3 column mini cards */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-center hover:border-blue-500/20 transition-all">
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+                      className="text-2xl font-black text-white block"
+                    >74</motion.span>
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-1">Career Score</span>
+                    <span className="text-[9px] font-bold text-amber-400">Needs work</span>
+                  </div>
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-center hover:border-emerald-500/20 transition-all">
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
+                      className="text-2xl font-black text-white flex items-center justify-center gap-1"
+                    ><TrendingUp className="w-4 h-4 text-emerald-400" />12%</motion.span>
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-1">Market Pulse</span>
+                    <span className="text-[9px] font-bold text-emerald-400">React demand ↑</span>
+                  </div>
+                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-center hover:border-rose-500/20 transition-all">
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.8, type: "spring", stiffness: 200 }}
+                      className="text-2xl font-black text-white block"
+                    >3</motion.span>
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-1">Skill Gaps</span>
+                    <span className="text-[9px] font-bold text-rose-400">Docker, K8s, GQL</span>
+                  </div>
+                </div>
+
+                {/* ATS Parse Score bars */}
+                <div className="space-y-4 mb-6">
+                  {[
+                    { label: "ATS Parseability", score: 85, color: "bg-emerald-500" },
+                    { label: "Technical Keywords", score: 40, color: "bg-rose-500" },
+                    { label: "Measurable Impact", score: 55, color: "bg-amber-500" }
+                  ].map((dim, i) => (
+                    <div key={i} className="space-y-1.5 text-left">
+                      <div className="flex justify-between text-[11px] font-bold">
+                        <span className="text-slate-400">{dim.label}</span>
+                        <span className="text-slate-500">{dim.score}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${dim.score}%` }}
+                          transition={{ duration: 1, delay: 0.5 + i * 0.15 }}
+                          className={`h-full rounded-full ${dim.color}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* AI Recommendation teaser */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Zap className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div className="text-left">
+                    <h5 className="text-[11px] font-black text-white mb-0.5">AI Recommendation</h5>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                      Add &quot;Docker&quot; and &quot;CI/CD&quot; to your experience section — 67% of matching roles require them.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
-            <div className="hidden lg:block w-[1px] h-12 bg-white/10 self-center" />
-
-            <div className="flex-1 flex items-center gap-3 px-5 py-3.5 md:py-4 bg-slate-950/50 rounded-2xl group focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/50 transition-all">
-              <Search className="w-5 h-5 text-slate-500 group-focus-within:text-blue-400 shrink-0 transition-colors" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Skills, Keywords, etc."
-                className="bg-transparent border-none outline-none text-white w-full placeholder:text-slate-500 text-[15px] font-medium"
-                disabled={isSearching}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSearching}
-              className="lg:ml-2 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl px-8 py-4 font-bold text-[15px] flex items-center justify-center gap-2.5 transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none min-w-[140px]"
-            >
-              {isSearching ? (
-                <>
-                  <div className="w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                  <span>Searching</span>
-                </>
-              ) : (
-                <>
-                  <span>Search Jobs</span>
-                </>
-              )}
-            </button>
-          </motion.form>
-
-          {/* Quick Trending Filters */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
-            className="mt-10 flex flex-wrap justify-center items-center gap-3 w-full px-4"
-          >
-            <span className="text-sm text-slate-500 font-semibold mr-1 flex items-center gap-1.5 hidden sm:flex">
-              <Sparkles className="w-4 h-4 text-amber-500" /> Trending:
-            </span>
-            <Link href="/jobs/Remote-Jobs" className="px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-[13px] font-medium hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-white transition-all backdrop-blur-md flex items-center gap-2">
-              <Globe className="w-4 h-4" /> Remote
-            </Link>
-            <Link href="/jobsbyrole/software-developer-engineer-role" className="px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-[13px] font-medium hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-white transition-all backdrop-blur-md flex items-center gap-2">
-              <Code className="w-4 h-4" /> Software
-            </Link>
-            <Link href="/jobsbytype/Internship-jobs" className="px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-[13px] font-medium hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-white transition-all backdrop-blur-md flex items-center gap-2">
-              <Award className="w-4 h-4" /> Internships
-            </Link>
-            <Link href="/jobsbytype/Freshers-jobs" className="hidden sm:flex px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-[13px] font-medium hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-white transition-all backdrop-blur-md items-center gap-2">
-              <GraduationCap className="w-4 h-4" /> Freshers
-            </Link>
-          </motion.div>
+          </div>
         </div>
       </div>
 
-      {/* ===== TRUST BAR — Real Data Only ===== */}
-      <div className="w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mt-0">
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 2: TRUST BAR — Platform Metrics (Not Job Board Vanity)
+          ═══════════════════════════════════════════════════════════════════ */}
+      <div className="w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800/60">
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
-            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{realStats.totalJobs}+</span>
-            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Active Jobs</span>
+            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">890+</span>
+            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Company Sources</span>
           </div>
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
-            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{realStats.uniqueCompanies}+</span>
-            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Companies Hiring</span>
-          </div>
-          <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
-            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{realStats.remoteJobs}+</span>
-            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Remote Roles</span>
+            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">6-Point</span>
+            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">ATS Resume Audit</span>
           </div>
           <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
             <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">100%</span>
             <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Direct Apply</span>
           </div>
+          <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center group">
+            <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors flex items-center gap-1 justify-center"><Lock className="w-6 h-6" /></span>
+            <span className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-widest">Zero Data Selling</span>
+          </div>
         </div>
       </div>
 
-      {/* ===== HOW IT WORKS ===== */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 3: RESUME HEALTH SCORE PROMO BLOCK
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border-b border-slate-200 dark:border-slate-800/80 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/4 w-[350px] h-[350px] bg-rose-500/5 blur-[100px] rounded-full pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-blue-500/5 blur-[80px] rounded-full pointer-events-none mix-blend-screen" />
+
+        <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+            {/* Left Content Column */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-widest"
+              >
+                🩺 Flagship AI Service
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white font-playfair tracking-tight leading-[1.15]"
+              >
+                75% of resumes get <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-amber-500 to-rose-500">
+                  filtered out by ATS
+                </span>
+                <br />before reaching a recruiter.
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed font-medium"
+              >
+                Stop sending resumes blindly into empty applications. Our AI parser scans your resume across 6 critical dimensions to identify structural flaws, missing tech keywords, and format parsing issues before you click apply.
+              </motion.p>
+
+              {/* Bullet list of checks */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2"
+              >
+                {[
+                  "Can automated crawlers read your format?",
+                  "Are contact infos fully parsed?",
+                  "Is the section structure ATS-friendly?",
+                  "Is your technical keyword density enough?",
+                  "Do you have quantified achievements?",
+                  "Is the document length & styling professional?"
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300 font-bold">
+                    <span className="w-5 h-5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center shrink-0 text-xs">✓</span>
+                    {item}
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+                className="pt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
+              >
+                <Link
+                  href="/resume-health"
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-center text-[15px] shadow-[0_10px_30px_rgba(244,63,94,0.3)] hover:shadow-[0_15px_40px_rgba(244,63,94,0.5)] transition-all flex items-center justify-center gap-2 group hover:-translate-y-0.5"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Audit My Resume Free
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <div className="text-center sm:text-left text-xs text-slate-500 dark:text-slate-400 font-bold self-center">
+                  Takes less than 15 seconds • No credit card required
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Right Visual Dashboard Column */}
+            <div className="lg:col-span-5 relative">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7 }}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 sm:p-8 shadow-[0_30px_60px_rgba(0,0,0,0.06)] relative overflow-hidden group hover:border-rose-500/20 transition-all duration-300"
+              >
+                {/* Visual Glassmorphic elements mimicking a parsed resume */}
+                <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-xl flex items-center justify-center">
+                      <Layers className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-[14px] font-black text-slate-900 dark:text-white leading-none">ATS Parse Report</h4>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-1">Status: Ready to fix</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-2xl font-black text-slate-900 dark:text-white">62<span className="text-[13px] font-bold text-slate-400">/100</span></span>
+                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-wider">Needs Work</span>
+                  </div>
+                </div>
+
+                {/* Simulated scoring dimensions */}
+                <div className="space-y-5">
+                  {[
+                    { label: "ATS Parseability", score: 85, color: "bg-emerald-500" },
+                    { label: "Technical Keyword Density", score: 40, color: "bg-rose-500" },
+                    { label: "Quantified Achievements", score: 50, color: "bg-amber-500" }
+                  ].map((dim, i) => (
+                    <div key={i} className="space-y-1.5 text-left">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-slate-700 dark:text-slate-300">{dim.label}</span>
+                        <span className="text-slate-500">{dim.score}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${dim.score}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1, delay: i * 0.15 }}
+                          className={`h-full rounded-full ${dim.color}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Priority action teaser */}
+                <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl text-left">
+                  <div className="flex gap-2.5 items-start">
+                    <Zap className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h5 className="text-[12px] font-bold text-slate-900 dark:text-white mb-0.5">Top AI Fix Recommendation</h5>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                        Add &quot;Docker&quot; and &quot;CI/CD&quot; under your experience section; Swiggy SDE job posts actively require them.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Graphic overlay to look premium */}
+                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all" />
+              </motion.div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 4: HOW IT WORKS
+          ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-24 bg-white dark:bg-slate-900">
         <div className="max-w-[1200px] mx-auto px-6">
           <motion.div
@@ -260,11 +492,11 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
               <Sparkles className="w-3.5 h-3.5" /> Simple & Transparent
             </div>
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white font-playfair tracking-tight mb-4">
-              Land your dream job in<br />
+              Get career-ready in<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">3 simple steps</span>
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto font-medium">
-              No middlemen. No application fees. No hidden subscriptions. Just you and your dream job.
+              No middlemen. No application fees. No hidden subscriptions. Just you and your career intelligence.
             </p>
           </motion.div>
 
@@ -279,10 +511,10 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
             >
               <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-black flex items-center justify-center shadow-lg">01</div>
               <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Search className="w-7 h-7" />
+                <FileText className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Search Any Role</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Browse curated job listings sourced directly from official company career pages — updated regularly.</p>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Audit Your Resume</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Upload your resume and get a 6-dimension ATS health score with specific fixes — no job description needed.</p>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-wider">✓ Always Free</span>
             </motion.div>
 
@@ -298,8 +530,8 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Zap className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Get AI Match Score</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Our AI instantly tells you your match % for any job, missing ATS keywords, a tailored cover letter, and interview prep questions.</p>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Fix & Optimize</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Use AI match scoring to find missing ATS keywords, generate tailored cover letters, and prep for interviews with STAR coaching.</p>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-black uppercase tracking-wider">✓ 6 Credits Free</span>
             </motion.div>
 
@@ -313,17 +545,19 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
             >
               <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center shadow-lg">03</div>
               <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Building className="w-7 h-7" />
+                <Target className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Apply Directly</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">One click takes you to the employer's official career page. We never intercept, charge, or collect your application data.</p>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Track & Apply</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Track your pipeline with the AI Kanban board, get recruiter outreach scripts, and apply directly to official career pages.</p>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 text-[11px] font-black uppercase tracking-wider">✓ 100% Transparent</span>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ===== FREE FEATURES SHOWCASE ===== */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 5: FREE FEATURES SHOWCASE
+          ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-24 bg-slate-950 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12),transparent_70%)] pointer-events-none" />
 
@@ -348,12 +582,12 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { icon: "🔍", title: "Unlimited Job Browsing", desc: "Browse thousands of live job listings from top companies. No login needed to search.", tag: "Always Free" },
+              { icon: "🩺", title: "Resume Health Score", desc: "Upload your resume and instantly see if it's ATS-ready — scored across 6 dimensions with specific fix suggestions. No job description needed.", tag: "New · Free" },
+              { icon: "🔍", title: "Opportunity Radar", desc: "Browse live opportunities sourced directly from 890+ official company career pages. Fully searchable and always current.", tag: "Always Free" },
               { icon: "🤖", title: "6 AI Match Credits", desc: "Every new account gets 6 AI credits to analyze your profile against real job descriptions and get a match score.", tag: "On Signup" },
               { icon: "✨", title: "First Analysis Free", desc: "Your very first AI match always costs zero credits. Try it completely risk-free before spending anything.", tag: "Zero Risk" },
-              { icon: "🔄", title: "Weekly Credit Refresh", desc: "+1 credit is added every week automatically (capped at 6). Come back weekly and you will always have credits.", tag: "Auto Refresh" },
-              { icon: "🎯", title: "Profile Completion Bonus", desc: "Fill your profile to 80% and earn a one-time bonus of +3 extra AI Match Credits — rewarding better matches.", tag: "+3 Bonus Credits" },
-              { icon: "🔒", title: "Direct Official Applications", desc: "Every Apply click takes you to the employer's real career page. We never store or forward your CV or data.", tag: "100% Transparent" },
+              { icon: "📋", title: "Application Tracker", desc: "Track up to 5 active applications with a Kanban board. Get AI follow-up scripts, interview prep, and rejection diagnosis.", tag: "5 Apps Free" },
+              { icon: "🔒", title: "100% Direct Applications", desc: "Every Apply click takes you to the employer's real career page. We never store or forward your CV or data.", tag: "100% Transparent" },
             ].map(({ icon, title, desc, tag }, i) => (
               <motion.div
                 key={title}
@@ -394,45 +628,106 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
         </div>
       </section>
 
-      {/* ===== AGGREGATOR TRANSPARENCY BANNER ===== */}
-      <section className="py-12 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 6: OPPORTUNITY RADAR — Jobs Search & Listings Header
+          The job search bar lives HERE, not in the hero.
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section id="opportunity-radar" className="py-16 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-[1200px] mx-auto px-6">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex flex-col md:flex-row items-center gap-6 md:gap-10 bg-blue-50 dark:bg-slate-950 border border-blue-100 dark:border-blue-500/20 rounded-3xl p-7 md:p-10"
+            className="text-center mb-10"
           >
-            <div className="w-16 h-16 shrink-0 rounded-2xl bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Globe className="w-8 h-8" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest mb-4">
+              <Radar className="w-3.5 h-3.5" /> Sourced from 890+ Corporate Career Pages
             </div>
-            <div className="flex-1 text-center md:text-left">
-              <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1.5">
-                🛡️ Vetted Curation Guarantee — 100% Spam-Free Aggregator
-              </p>
-              <p className="text-slate-700 dark:text-slate-300 font-medium text-[15px] leading-relaxed">
-                RGJobs actively crawls and vets job listings <strong>directly from official company career subdomains</strong> (e.g. Greenhouse, Workday, Lever) and registered legal corporations. When you click Apply, you go <strong>straight to the official employer portal</strong>. We automatically discard all third-party affiliates, reseller boards, and generic spam, keeping your applications 100% direct and under your control.
-              </p>
-            </div>
-            <Link
-              href="/pro"
-              className="shrink-0 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20 whitespace-nowrap"
+            <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white font-playfair tracking-tight mb-3">
+              Opportunity Radar
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xl mx-auto">
+              AI-curated opportunities sourced directly from official corporate databases. Every link is a 100% direct application — zero middlemen.
+            </p>
+          </motion.div>
+
+          {/* Search bar — moved here from hero */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <form
+              onSubmit={handleSearch}
+              className="w-full max-w-[900px] mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.3)] flex flex-col md:flex-row gap-1.5 transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-500/20"
             >
-              See AI Features →
-            </Link>
+              <div className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl focus-within:bg-white dark:focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/20 transition-all">
+                <Briefcase className="w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="Role (e.g. Frontend Developer)"
+                  className="bg-transparent border-none outline-none text-slate-900 dark:text-white w-full placeholder:text-slate-400 text-sm font-medium"
+                  disabled={isSearching}
+                />
+              </div>
+
+              <div className="flex-[0.8] flex items-center gap-2.5 px-4 py-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl focus-within:bg-white dark:focus-within:bg-slate-900 border border-transparent focus-within:border-blue-500/20 transition-all">
+                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="City or Remote"
+                  className="bg-transparent border-none outline-none text-slate-900 dark:text-white w-full placeholder:text-slate-400 text-sm font-medium"
+                  disabled={isSearching}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-6 py-2.5 font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-blue-600/20 min-w-[140px]"
+              >
+                {isSearching ? (
+                  <>
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    <span>Searching</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4" />
+                    <span>Search Radar</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Category shortcuts */}
+            <div className="mt-5 flex flex-wrap justify-center items-center gap-3">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Quick filters:</span>
+              <Link href="/jobs/Remote-Jobs" className="px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-500/30 text-[11px] font-bold transition-all">Remote Roles</Link>
+              <Link href="/jobsbyrole/software-developer-engineer-role" className="px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-500/30 text-[11px] font-bold transition-all">Software Engineering</Link>
+              <Link href="/jobsbytype/Internship-jobs" className="px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-500/30 text-[11px] font-bold transition-all">Internships</Link>
+              <Link href="/jobsbytype/Freshers-jobs" className="px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-500/30 text-[11px] font-bold transition-all">Freshers</Link>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ===== EXPLORE CATEGORIES ===== */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 7: EXPLORE BY CATEGORY
+          ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-20 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white font-playfair mb-3 tracking-tight">Explore by Category</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">Find the perfect role from our expertly curated lists.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-lg">Find the perfect role from our curated opportunity radar.</p>
             </div>
-            <Link href="/" className="text-blue-600 font-bold flex items-center gap-2 hover:gap-3 transition-all">
+            <Link href="/jobs" className="text-blue-600 font-bold flex items-center gap-2 hover:gap-3 transition-all">
               Browse all <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

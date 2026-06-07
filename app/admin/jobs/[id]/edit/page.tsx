@@ -55,7 +55,48 @@ export default function EditJobPage() {
   const [saving,       setSaving]       = useState(false);
   const [uploading,    setUploading]    = useState(false);
   const [toast,        setToast]        = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  // Category states
+  const [jobRole, setJobRole] = useState<any[]>([]);
+  const [jobLocation, setJobLocation] = useState<any[]>([]);
+  const [jobBatch, setJobBatch] = useState<any[]>([]);
+  const [jobPay, setJobPay] = useState<any[]>([]);
+  const [jobDomain, setJobDomain] = useState<any[]>([]);
+  const [jobExpLevel, setJobExpLevel] = useState<any[]>([]);
+  const [jobCompanyType, setJobCompanyType] = useState<any[]>([]);
+
   const logoRef = useRef<HTMLInputElement>(null);
+
+  // Fetch categories exactly as Add Job page
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const [
+          rolesRes, locationRes, batchRes, payRes, 
+          domainRes, expLevelRes, companyTypeRes
+        ] = await Promise.all([
+          fetch(`${API}/api/getRolesCat`).then(r => r.json()),
+          fetch(`${API}/api/getLocationCat`).then(r => r.json()),
+          fetch(`${API}/api/getBatchCat`).then(r => r.json()),
+          fetch(`${API}/api/getPayCat`).then(r => r.json()),
+          fetch(`${API}/api/getDomainCat`).then(r => r.json()),
+          fetch(`${API}/api/getExpLevelCat`).then(r => r.json()),
+          fetch(`${API}/api/getCompanyCat`).then(r => r.json())
+        ]);
+
+        setJobRole(rolesRes.roleData || []);
+        setJobLocation(locationRes.roleData || []);
+        setJobBatch(batchRes.roleData || []);
+        setJobPay(payRes.roleData || []);
+        setJobDomain(domainRes.roleData || []);
+        setJobExpLevel(expLevelRes.roleData || []);
+        setJobCompanyType(companyTypeRes.roleData || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
@@ -283,10 +324,6 @@ export default function EditJobPage() {
             <label className={labelCls}>Apply Link *</label>
             <input type="url" value={form.joblink} onChange={set('joblink')} placeholder="https://..." className={inputCls} />
           </div>
-          <div>
-            <label className={labelCls}>Company Type (jobtype)</label>
-            <input type="text" value={form.jobtype} onChange={set('jobtype')} placeholder="e.g. Service Based, Product Based" className={inputCls} />
-          </div>
         </div>
       </Section>
 
@@ -315,39 +352,67 @@ export default function EditJobPage() {
       </Section>
 
       {/* ── Categorization ── */}
-      <Section title="Categorization & Filters">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className={labelCls}>Batches (display string) *</label>
-            <input type="text" value={form.batches} onChange={set('batches')} placeholder="e.g. 2024, 2025, 2026" className={inputCls} />
+      <Section title="Categorization (Dropdowns)">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="col-span-1 md:col-span-2 lg:col-span-3">
+            <label className={labelCls}>Batches Description String *</label>
+            <input type="text" value={form.batches} onChange={set('batches')} required className={inputCls} placeholder="e.g. 2024, 2025" />
           </div>
           <div>
-            <label className={labelCls}>Job By Role ID (jobbyrole)</label>
-            <input type="number" value={form.jobbyrole} onChange={set('jobbyrole')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Experience Level *</label>
+            <select value={form.jobexplevel} onChange={set('jobexplevel')} required className={inputCls}>
+              <option value="">Select Level</option>
+              {jobExpLevel.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
           <div>
-            <label className={labelCls}>Job By City ID (jobbycity)</label>
-            <input type="number" value={form.jobbycity} onChange={set('jobbycity')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Job City (Category) *</label>
+            <select value={form.jobbycity} onChange={set('jobbycity')} required className={inputCls}>
+              <option value="">Select City</option>
+              {jobLocation.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
           <div>
-            <label className={labelCls}>Batch1 (past years)</label>
-            <input type="number" value={form.batch1} onChange={set('batch1')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Company Type *</label>
+            <select value={form.jobtype} onChange={set('jobtype')} required className={inputCls}>
+              <option value="">Select Company Type</option>
+              {jobCompanyType.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
           <div>
-            <label className={labelCls}>Batch2 (current/future)</label>
-            <input type="number" value={form.batch2} onChange={set('batch2')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Pay Range Category *</label>
+            <select value={form.jobpayrange} onChange={set('jobpayrange')} required className={inputCls}>
+              <option value="">Select Range</option>
+              {jobPay.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
           <div>
-            <label className={labelCls}>Batch3 (domain e.g. SWE, DevOps)</label>
-            <input type="number" value={form.batch3} onChange={set('batch3')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Category Role *</label>
+            <select value={form.jobbyrole} onChange={set('jobbyrole')} required className={inputCls}>
+              <option value="">Select Category Role</option>
+              {jobRole.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
           <div>
-            <label className={labelCls}>Pay Range ID (jobpayrange)</label>
-            <input type="number" value={form.jobpayrange} onChange={set('jobpayrange')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Job Domain</label>
+            <select value={form.batch3} onChange={set('batch3')} className={inputCls}>
+              <option value="">Select Domain</option>
+              {jobDomain.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
           <div>
-            <label className={labelCls}>Experience Level ID (jobexplevel)</label>
-            <input type="number" value={form.jobexplevel} onChange={set('jobexplevel')} placeholder="FK integer" className={inputCls} />
+            <label className={labelCls}>Past Batches</label>
+            <select value={form.batch1} onChange={set('batch1')} className={inputCls}>
+              <option value="">Select Past Batches</option>
+              {jobBatch.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Upcoming Batches</label>
+            <select value={form.batch2} onChange={set('batch2')} className={inputCls}>
+              <option value="">Select Upcoming Batches</option>
+              {jobBatch.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
           </div>
         </div>
       </Section>

@@ -20,6 +20,7 @@ type Job = {
   id: number; role: string; title: string; location: string;
   pay: string; batches: string; image: string; joblink: string;
   is_featured: boolean; is_urgent: boolean; created_at: string;
+  status: string;
 };
 
 export default function AdminJobsPage() {
@@ -28,7 +29,8 @@ export default function AdminJobsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [page,      setPage]      = useState(1);
   const [search,    setSearch]    = useState('');
-  const [filter,    setFilter]    = useState<'all' | 'featured' | 'urgent'>('all');
+  const [filter,    setFilter]    = useState<'all' | 'featured' | 'urgent' | 'old'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'published' | 'draft'>('all');
   const [loading,   setLoading]   = useState(true);
   const [toggling,  setToggling]  = useState<Record<string, boolean>>({});
   const [deleteId,  setDeleteId]  = useState<number | null>(null);
@@ -38,6 +40,7 @@ export default function AdminJobsPage() {
     setLoading(true);
     const params = new URLSearchParams({
       page: String(page),
+      ...(activeTab !== 'all' && { status: activeTab }),
       ...(search && { search }),
       ...(filter !== 'all' && { filter }),
     });
@@ -56,7 +59,19 @@ export default function AdminJobsPage() {
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
   // Debounce search
-  useEffect(() => { setPage(1); }, [search, filter]);
+  useEffect(() => { setPage(1); }, [search, filter, activeTab]);
+
+  /* ── Publish Job ── */
+  const publishJob = async (id: number) => {
+    try {
+      const res = await fetch(`${API}/api/admin/jobs/${id}/publish`, { method: 'PUT', headers: authH() });
+      const data = await res.json();
+      if (data.success) {
+        setJobs(prev => prev.filter(j => j.id !== id));
+        setTotal(t => t - 1);
+      }
+    } catch {}
+  };
 
   /* ── Toggle featured / urgent ── */
   const toggle = async (id: number, field: 'featured' | 'urgent') => {
@@ -147,8 +162,8 @@ export default function AdminJobsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div>
           <h1 className="text-2xl font-black text-slate-900">Job Management</h1>
-          <p className="text-[13px] text-slate-500 font-medium mt-0.5">
-            {total.toLocaleString()} total jobs
+          <p className="text-[13px] text-slate-500 font-medium mt-0.5 capitalize">
+            {total.toLocaleString()} {activeTab} jobs
           </p>
         </div>
         <Link 
@@ -161,8 +176,38 @@ export default function AdminJobsPage() {
       </div>
 
       {/* ── Search + Filter bar ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row gap-3">
-        <div className="flex items-center gap-2 flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-4">
+        {/* Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-2 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => { setActiveTab('all'); setPage(1); }}
+            className={`px-4 py-2 text-[14px] font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'all' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            All Jobs
+          </button>
+          <button
+            onClick={() => { setActiveTab('published'); setPage(1); }}
+            className={`px-4 py-2 text-[14px] font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'published' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Live Jobs
+          </button>
+          <button
+            onClick={() => { setActiveTab('draft'); setPage(1); }}
+            className={`px-4 py-2 text-[14px] font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'draft' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Pending AI Drafts
+            {activeTab !== 'draft' && <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full text-[10px]">New</span>}
+          </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex items-center gap-2 flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
@@ -178,8 +223,8 @@ export default function AdminJobsPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded-xl">
-          {(['all', 'featured', 'urgent'] as const).map(f => (
+        <div className="flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto no-scrollbar">
+          {(['all', 'featured', 'urgent', 'old'] as const).map(f => (
             <button
               key={f}
               onClick={() => { setFilter(f); setPage(1); }}
@@ -191,9 +236,11 @@ export default function AdminJobsPage() {
             >
               {f === 'featured' && <Star className="w-3.5 h-3.5" />}
               {f === 'urgent'   && <Clock className="w-3.5 h-3.5" />}
-              {f === 'all' ? 'All Jobs' : f}
+              {f === 'old'      && <Clock className="w-3.5 h-3.5 text-rose-500" />}
+              {f === 'all' ? 'All Jobs' : f === 'old' ? 'Older than 30 Days' : f}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -237,7 +284,14 @@ export default function AdminJobsPage() {
                           />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900 leading-tight line-clamp-1">{job.role}</div>
+                          <div className="font-bold text-slate-900 leading-tight line-clamp-1 flex items-center gap-2">
+                            {job.role}
+                            {activeTab === 'all' && (
+                               <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${job.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                 {job.status === 'published' ? 'LIVE' : 'DRAFT'}
+                               </span>
+                            )}
+                          </div>
                           <div className="text-slate-500 font-medium text-[12px] line-clamp-1">{job.title}</div>
                         </div>
                       </div>
@@ -306,6 +360,14 @@ export default function AdminJobsPage() {
                     {/* Actions */}
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
+                        {job.status === 'draft' && (
+                          <button
+                            onClick={() => publishJob(job.id)}
+                            className="px-3 h-8 rounded-lg bg-emerald-50 text-emerald-600 font-bold border border-emerald-200 hover:bg-emerald-100 transition-all text-[12px]"
+                          >
+                            Approve
+                          </button>
+                        )}
                         <Link
                           href={`/admin/jobs/${job.id}/edit`}
                           className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all"

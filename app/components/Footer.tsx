@@ -47,7 +47,8 @@ export default function Footer() {
   };
   const quickLinks = {
     candidates: [
-      { name: "Find Jobs", path: "/jobs", upcoming: false },
+      { name: "Opportunity Radar", path: "/jobs", upcoming: false },
+      { name: "Resume Audit", path: "/resume-health", upcoming: false },
       { name: "Browse Companies", path: "/companies", upcoming: false },
       { name: "Candidate Dashboard", path: "/login", upcoming: false },
       { name: "Saved Jobs", path: "/login", upcoming: false },
@@ -89,7 +90,7 @@ export default function Footer() {
 
   return (
     <footer className="w-full bg-slate-950 text-slate-300 font-sora relative overflow-hidden border-t border-slate-800">
-      
+
       {/* Premium Background Effects */}
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" />
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_80%,rgba(37,99,235,0.05),transparent_40%),radial-gradient(circle_at_80%_20%,rgba(245,201,107,0.03),transparent_40%)]" />
@@ -98,20 +99,19 @@ export default function Footer() {
       <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-12 relative z-10">
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8 mb-20">
-          
+
           {/* Brand Info (takes up 2 columns) */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             <Link href="/" className="flex items-center group">
-               <div className="h-12 group-hover:scale-105 transition-transform duration-300">
-                  <img src="/logo.webp" alt="RGJobs" className="h-full w-auto object-contain" />
-               </div>
+              <div className="h-12 group-hover:scale-105 transition-transform duration-300">
+                <img src="/logo.webp" alt="RGJobs" className="h-full w-auto object-contain" />
+              </div>
             </Link>
-            
+
             <p className="text-sm text-slate-400 leading-relaxed font-medium">
-              Connecting elite talent with the world's most innovative companies. 
-              Elevate your career journey on a platform engineered for excellence.
+              AI-powered career intelligence tools that help you understand why you're not getting callbacks — and what to fix.
             </p>
 
             <div className="flex flex-col gap-3 mt-4">
@@ -143,21 +143,19 @@ export default function Footer() {
               {quickLinks.candidates.map((link: any) => (
                 <li key={link.name}>
                   <Link href={
-                    link.name === "Candidate Dashboard" 
-                      ? candidatePath 
-                      : link.name === "Saved Jobs" 
-                        ? savedJobsPath 
+                    link.name === "Candidate Dashboard"
+                      ? candidatePath
+                      : link.name === "Saved Jobs"
+                        ? savedJobsPath
                         : link.path
-                  } className={`text-sm font-medium transition-colors flex items-center gap-2 group ${
-                    link.highlight 
-                      ? 'text-amber-400 hover:text-amber-300 font-bold' 
-                      : link.upcoming 
-                        ? 'text-slate-500 hover:text-slate-400 cursor-not-allowed' 
+                  } className={`text-sm font-medium transition-colors flex items-center gap-2 group ${link.highlight
+                      ? 'text-amber-400 hover:text-amber-300 font-bold'
+                      : link.upcoming
+                        ? 'text-slate-500 hover:text-slate-400 cursor-not-allowed'
                         : 'text-slate-400 hover:text-blue-400'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      link.highlight ? 'bg-amber-400' : link.upcoming ? 'bg-slate-700' : 'bg-blue-500/0 group-hover:bg-blue-400'
-                    }`} />
+                    }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full transition-all ${link.highlight ? 'bg-amber-400' : link.upcoming ? 'bg-slate-700' : 'bg-blue-500/0 group-hover:bg-blue-400'
+                      }`} />
                     {link.name}
                     {link.upcoming && <span className="text-[9px] uppercase font-bold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md ml-1 border border-slate-700">Soon</span>}
                   </Link>
@@ -185,7 +183,7 @@ export default function Footer() {
           <div className="lg:col-span-2 flex flex-col gap-5">
             <h3 className="text-white font-bold text-base uppercase tracking-wider">Stay Updated</h3>
             <p className="text-sm text-slate-400 font-medium">Subscribe to our newsletter for the latest remote opportunities and career insights.</p>
-            
+
             <form onSubmit={handleSubscribe} className="mt-2 relative">
               <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 focus-within:bg-white/10 focus-within:border-blue-500/50 transition-all duration-300">
                 <input
@@ -200,11 +198,10 @@ export default function Footer() {
                 <button
                   type="submit"
                   disabled={loading || subscribed}
-                  className={`flex items-center justify-center w-12 h-10 rounded-xl text-white transition-all shadow-md ${
-                    subscribed 
-                      ? 'bg-emerald-500 cursor-default' 
+                  className={`flex items-center justify-center w-12 h-10 rounded-xl text-white transition-all shadow-md ${subscribed
+                      ? 'bg-emerald-500 cursor-default'
                       : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

@@ -6,8 +6,8 @@ import ReactPaginate from "react-paginate";
 import slugify from "react-slugify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MapPin, Wallet, Briefcase, Calendar, Share2, Clock, 
-  Building2, Star, ExternalLink, Search, Bookmark, 
+  MapPin, Wallet, Briefcase, Calendar, Share2, Clock,
+  Building2, Star, ExternalLink, Search, Bookmark,
   CheckCircle2, Filter, GraduationCap, ChevronLeft, ChevronRight, X,
   WifiOff, RefreshCw
 } from "lucide-react";
@@ -21,6 +21,9 @@ export interface JobsBrowserProps {
   initialJobType?: string[];
   pageTitle?: string;
   pageDescription?: string;
+  initialJobs?: any[];
+  initialTotal?: number;
+  initialTotalPages?: number;
 }
 
 const Toast = ({ message, type, onClose }: any) => {
@@ -34,9 +37,8 @@ const Toast = ({ message, type, onClose }: any) => {
       initial={{ opacity: 0, y: 50, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
-      className={`fixed bottom-6 right-6 z-[9999] px-6 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl border border-white/20 flex items-center gap-3 font-semibold text-[14px] ${
-        type === "success" ? "bg-emerald-500/95 text-white" : "bg-blue-600/95 text-white"
-      }`}
+      className={`fixed bottom-6 right-6 z-[9999] px-6 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl border border-white/20 flex items-center gap-3 font-semibold text-[14px] ${type === "success" ? "bg-emerald-500/95 text-white" : "bg-blue-600/95 text-white"
+        }`}
     >
       <CheckCircle2 className="w-5 h-5 opacity-90" />
       {message}
@@ -45,8 +47,8 @@ const Toast = ({ message, type, onClose }: any) => {
 };
 
 export default function JobsBrowser(props: JobsBrowserProps) {
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<any[]>(props.initialJobs || []);
+  const [loading, setLoading] = useState(!props.initialJobs);
   const [fetchError, setFetchError] = useState(false);
 
   // Read initial state from sessionStorage if it exists, otherwise fall back to props/defaults
@@ -56,15 +58,15 @@ export default function JobsBrowser(props: JobsBrowserProps) {
     if (val === null) return fallback;
     try {
       return JSON.parse(val);
-    } catch(e) {
+    } catch (e) {
       return val;
     }
   };
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(() => getSessionState('jobs_currentPage', 0));
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalJobs, setTotalJobs] = useState(0);
+  const [totalPages, setTotalPages] = useState(props.initialTotalPages || 0);
+  const [totalJobs, setTotalJobs] = useState(props.initialTotal || 0);
 
   // Filters State
   const [searchTerm, setSearchTerm] = useState(() => getSessionState('jobs_searchTerm', props.initialSearch || ""));
@@ -78,15 +80,40 @@ export default function JobsBrowser(props: JobsBrowserProps) {
   const prevFiltersRef = useRef("");
 
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
-  const [toastMessage, setToastMessage] = useState<{msg: string, type: string} | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ msg: string, type: string } | null>(null);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
+    
     const saved = localStorage.getItem(`savedJobs_${userId}`);
     if (saved) {
       setSavedJobs(JSON.parse(saved));
+    }
+
+    if (token && user?.id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/saved-jobs`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setSavedJobs(data.saved_job_ids);
+          localStorage.setItem(`savedJobs_${userId}`, JSON.stringify(data.saved_job_ids));
+          
+          const detailsMap: Record<string, any> = {};
+          data.saved_jobs.forEach((j: any) => {
+            detailsMap[String(j.id)] = j;
+          });
+          localStorage.setItem(`savedJobsDetails_${userId}`, JSON.stringify(detailsMap));
+        }
+      })
+      .catch(err => console.error('Failed to sync saved jobs from database:', err));
     }
   }, []);
 
@@ -148,7 +175,9 @@ export default function JobsBrowser(props: JobsBrowserProps) {
     if (isFirstMount.current) {
       isFirstMount.current = false;
       prevFiltersRef.current = currentFiltersStr;
-      fetchJobs(currentPage);
+      if (!props.initialJobs || props.initialJobs.length === 0) {
+        fetchJobs(currentPage);
+      }
       return;
     }
 
@@ -162,7 +191,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
       }, 400); // 400ms debounce
       return () => clearTimeout(timer);
     }
-  }, [searchTerm, locations, roles, batches, experience, jobType, fetchJobs]);
+  }, [searchTerm, locations, roles, batches, experience, jobType, fetchJobs, props.initialJobs]);
 
   const handlePageClick = ({ selected }: any) => {
     setCurrentPage(selected);
@@ -171,7 +200,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
   };
 
   const handleFilterToggle = (category: string, value: string) => {
-    const updater = (prev: string[]) => 
+    const updater = (prev: string[]) =>
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value];
 
     if (category === 'locations') setLocations(updater);
@@ -184,6 +213,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
   const toggleSaveJob = (post: any) => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
     const savedKey = `savedJobs_${userId}`;
     const detailsKey = `savedJobsDetails_${userId}`;
 
@@ -210,6 +240,19 @@ export default function JobsBrowser(props: JobsBrowserProps) {
         };
       }
       localStorage.setItem(detailsKey, JSON.stringify(details));
+
+      // Sync with backend database in background
+      if (token && user?.id) {
+        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/jobs/${jobId}/save`;
+        fetch(url, {
+          method: isSaved ? 'DELETE' : 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        })
+        .catch(err => console.error('Failed to sync save state to backend database:', err));
+      }
 
       setToastMessage({
         msg: isSaved ? 'Job removed from saved' : 'Job saved!',
@@ -279,7 +322,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
       if (diffHours === 0) {
@@ -311,7 +354,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
       </AnimatePresence>
 
       <div className="max-w-[1400px] mx-auto px-6">
-        
+
         {/* Header Section */}
         <div className="mb-10 text-center md:text-left flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -324,27 +367,27 @@ export default function JobsBrowser(props: JobsBrowserProps) {
           </div>
 
           <div className="flex items-center gap-4">
-             <button 
-                onClick={() => setIsMobileFiltersOpen(true)}
-                className="md:hidden flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-bold"
-             >
-                <Filter className="w-5 h-5" /> Filters {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-blue-600"></span>}
-             </button>
-             <div className="hidden md:flex items-center px-4 py-3 bg-white border border-slate-200 shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl w-[320px]">
-                <Search className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
-                <input 
-                  type="text" 
-                  placeholder="Seach role, company, skills..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none text-[15px] font-medium text-slate-800 placeholder-slate-400"
-                />
-                {searchTerm && (
-                  <button onClick={() => setSearchTerm("")} className="ml-2 text-slate-400 hover:text-slate-600">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-             </div>
+            <button
+              onClick={() => setIsMobileFiltersOpen(true)}
+              className="md:hidden flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-bold"
+            >
+              <Filter className="w-5 h-5" /> Filters {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-blue-600"></span>}
+            </button>
+            <div className="hidden md:flex items-center px-4 py-3 bg-white border border-slate-200 shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl w-[320px]">
+              <Search className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
+              <input
+                type="text"
+                placeholder="Seach role, company, skills..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-transparent border-none outline-none text-[15px] font-medium text-slate-800 placeholder-slate-400"
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="ml-2 text-slate-400 hover:text-slate-600">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
         {/* AI Marketing Banner (Transparent UX) */}
@@ -352,7 +395,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
           {/* Background glow effects */}
           <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] rounded-full bg-purple-500/20 blur-[80px] pointer-events-none" />
           <div className="absolute bottom-[-50%] left-[-10%] w-[200px] h-[200px] rounded-full bg-blue-500/20 blur-[60px] pointer-events-none" />
-          
+
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-left flex-1">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-purple-300 text-xs font-bold uppercase tracking-widest mb-4">
@@ -362,17 +405,17 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                 Stop guessing. Beat the ATS robot.
               </h3>
               <p className="text-slate-300 font-medium leading-relaxed max-w-xl text-[15px] mb-5">
-                Every new user gets <span className="text-emerald-400 font-bold">6 Free AI Credits</span> to analyze jobs instantly. 
+                Every new user gets <span className="text-emerald-400 font-bold">6 Free AI Credits</span> to analyze jobs instantly.
                 We extract missing keywords from your resume and generate highly personalized cover letters to 10x your hiring chances.
               </p>
-              <Link 
-                href="/pro" 
+              <Link
+                href="/pro"
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-400 hover:to-blue-400 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-[0_4px_15px_rgba(139,92,246,0.3)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 text-sm"
               >
                 Unlock Unlimited PRO Access <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            
+
             <div className="shrink-0 flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
               <div className="text-center">
                 <div className="text-3xl font-black text-white">6</div>
@@ -388,11 +431,11 @@ export default function JobsBrowser(props: JobsBrowserProps) {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          
+
           {/* Left Sidebar Filters - Desktop */}
           <div className={`fixed inset-0 z-50 bg-white/80 backdrop-blur-xl md:static md:bg-transparent md:backdrop-blur-none transition-all duration-300 md:block md:w-[300px] shrink-0 ${isMobileFiltersOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto'}`}>
             <div className={`absolute top-0 right-0 bottom-0 w-[300px] bg-white border-l border-slate-200 shadow-2xl md:static md:w-full md:bg-white md:border md:border-slate-200 md:shadow-[0_4px_20px_rgba(0,0,0,0.03)] md:rounded-[2rem] flex flex-col h-full overflow-hidden transition-transform duration-300 ${isMobileFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-              
+
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                 <div className="flex items-center gap-2">
                   <Filter className="w-5 h-5 text-blue-600" />
@@ -411,7 +454,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
               </div>
 
               <div className="p-6 overflow-y-auto flex-1 custom-scrollbar flex flex-col gap-8">
-                
+
                 {/* Location Filter */}
                 <FilterSection title="Location" type="locations" options={FILTER_OPTIONS.locations} current={locations} onChange={handleFilterToggle} />
                 <FilterSection title="Role / Domain" type="roles" options={FILTER_OPTIONS.roles} current={roles} onChange={handleFilterToggle} />
@@ -420,15 +463,15 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                 <FilterSection title="Experience" type="experience" options={FILTER_OPTIONS.experience} current={experience} onChange={handleFilterToggle} />
 
               </div>
-              
+
               <div className="p-5 border-t border-slate-100 bg-slate-50 md:hidden">
-                 <button onClick={() => setIsMobileFiltersOpen(false)} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center shadow-lg shadow-blue-600/20">
-                   Show {totalJobs} Results
-                 </button>
+                <button onClick={() => setIsMobileFiltersOpen(false)} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center shadow-lg shadow-blue-600/20">
+                  Show {totalJobs} Results
+                </button>
               </div>
 
             </div>
-            
+
             {/* Mobile overlay backdrop */}
             {isMobileFiltersOpen && (
               <div onClick={() => setIsMobileFiltersOpen(false)} className="absolute inset-0 bg-slate-900/20 md:hidden -z-10 backdrop-blur-sm"></div>
@@ -437,7 +480,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
 
           {/* Right Content - Grid */}
           <div className="flex-1 w-full min-w-0">
-            
+
             <div className="flex items-center justify-between mb-8">
               <div className="text-slate-600 font-medium">
                 {loading ? "Searching..." : `Showing ${totalJobs} opportunities`}
@@ -447,26 +490,26 @@ export default function JobsBrowser(props: JobsBrowserProps) {
             {loading ? (
               // Loading Skeletons
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                 {[1,2,3,4,5,6].map(i => (
-                    <div key={i} className="bg-white border border-slate-100 rounded-[2rem] p-6 h-[280px] animate-pulse">
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-14 h-14 bg-slate-100 rounded-2xl"></div>
-                        <div className="flex-1">
-                          <div className="h-5 bg-slate-100 rounded-md w-3/4 mb-2.5"></div>
-                          <div className="h-4 bg-slate-50 rounded-md w-1/2"></div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mb-8">
-                         <div className="w-24 h-8 bg-slate-50 rounded-lg"></div>
-                         <div className="w-20 h-8 bg-slate-50 rounded-lg"></div>
-                         <div className="w-28 h-8 bg-slate-50 rounded-lg"></div>
-                      </div>
-                      <div className="mt-auto flex justify-between">
-                         <div className="w-20 h-5 bg-slate-50 rounded-md"></div>
-                         <div className="w-24 h-9 bg-slate-50 rounded-full"></div>
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="bg-white border border-slate-100 rounded-[2rem] p-6 h-[280px] animate-pulse">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-14 h-14 bg-slate-100 rounded-2xl"></div>
+                      <div className="flex-1">
+                        <div className="h-5 bg-slate-100 rounded-md w-3/4 mb-2.5"></div>
+                        <div className="h-4 bg-slate-50 rounded-md w-1/2"></div>
                       </div>
                     </div>
-                 ))}
+                    <div className="flex gap-2 mb-8">
+                      <div className="w-24 h-8 bg-slate-50 rounded-lg"></div>
+                      <div className="w-20 h-8 bg-slate-50 rounded-lg"></div>
+                      <div className="w-28 h-8 bg-slate-50 rounded-lg"></div>
+                    </div>
+                    <div className="mt-auto flex justify-between">
+                      <div className="w-20 h-5 bg-slate-50 rounded-md"></div>
+                      <div className="w-24 h-9 bg-slate-50 rounded-full"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : fetchError ? (
               // Error State
@@ -476,8 +519,8 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2 font-playfair">Unable to load jobs</h3>
                 <p className="text-slate-500 font-medium max-w-sm mb-6">Please check your internet connection and try again. If the problem persists, contact us.</p>
-                <button 
-                  onClick={() => fetchJobs(currentPage)} 
+                <button
+                  onClick={() => fetchJobs(currentPage)}
                   className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg"
                 >
                   <RefreshCw className="w-4 h-4" /> Retry
@@ -498,106 +541,104 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                 )}
               </div>
             ) : (
-               <>
+              <>
                 {/* Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                   <AnimatePresence>
+                  <AnimatePresence>
                     {jobs.map((post: any, i) => (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: i * 0.05 }}
-                        className={`group relative bg-white border rounded-[2rem] p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] flex flex-col ${
-                          isFeatured(post) ? 'border-amber-200/60 shadow-[0_4px_20px_rgba(245,158,11,0.05)]' : 'border-slate-200 hover:border-blue-200'
-                        }`}
+                        className={`group relative bg-white border rounded-[2rem] p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] flex flex-col ${isFeatured(post) ? 'border-amber-200/60 shadow-[0_4px_20px_rgba(245,158,11,0.05)]' : 'border-slate-200 hover:border-blue-200'
+                          }`}
                         key={post.id}
                       >
-                         <div className="flex items-center justify-between mb-5 min-h-[32px]">
-                            <div className="flex gap-2 flex-wrap">
-                              {isFeatured(post) && (
-                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold tracking-wide uppercase border border-amber-100">
-                                  <Star className="w-3.5 h-3.5" /> Featured
+                        <div className="flex items-center justify-between mb-5 min-h-[32px]">
+                          <div className="flex gap-2 flex-wrap">
+                            {isFeatured(post) && (
+                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold tracking-wide uppercase border border-amber-100">
+                                <Star className="w-3.5 h-3.5" /> Featured
+                              </div>
+                            )}
+                            {isUrgentHiring(post) && (
+                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-bold tracking-wide uppercase border border-rose-100">
+                                <Clock className="w-3.5 h-3.5" /> Urgent
+                              </div>
+                            )}
+                            {(() => {
+                              const freshness = getJobFreshness(post.created_at);
+                              if (!freshness) return null;
+                              return (
+                                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase border ${freshness.color}`}>
+                                  {freshness.label === 'New' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                  {freshness.label}
                                 </div>
-                              )}
-                              {isUrgentHiring(post) && (
-                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-bold tracking-wide uppercase border border-rose-100">
-                                  <Clock className="w-3.5 h-3.5" /> Urgent
-                                </div>
-                              )}
-                              {(() => {
-                                const freshness = getJobFreshness(post.created_at);
-                                if (!freshness) return null;
-                                return (
-                                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase border ${freshness.color}`}>
-                                    {freshness.label === 'New' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                                    {freshness.label}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                            <button 
-                              onClick={() => toggleSaveJob(post)}
-                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all bg-slate-50 hover:bg-slate-100 border border-slate-200 ${
-                                savedJobs.includes(post.id) ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-slate-400 hover:text-blue-500'
+                              );
+                            })()}
+                          </div>
+                          <button
+                            onClick={() => toggleSaveJob(post)}
+                            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all bg-slate-50 hover:bg-slate-100 border border-slate-200 ${savedJobs.includes(post.id) ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-slate-400 hover:text-blue-500'
                               }`}
+                          >
+                            <Bookmark className={`w-4 h-4 ${savedJobs.includes(post.id) ? 'fill-blue-600' : ''}`} />
+                          </button>
+                        </div>
+
+                        <div className="flex gap-4 mb-6">
+                          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-2">
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${post.image}`}
+                              alt={`${post.title} logo`}
+                              loading="lazy"
+                              className="w-full h-full object-contain"
+                              onError={(e: any) => { e.target.src = '/logo.webp'; }}
+                            />
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <h2 className="text-[17px] font-bold text-slate-900 leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
+                              {post.role}
+                            </h2>
+                            <span className="text-[14px] text-slate-500 font-medium flex items-center gap-1.5 line-clamp-1">
+                              <Building2 className="w-3.5 h-3.5 opacity-70" /> {post.title}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 mb-8 mt-auto">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] text-slate-600 font-medium">
+                            <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="truncate max-w-[100px]">{post.batches || "Any batch"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] text-slate-600 font-medium">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                            {isRemote(post) ? <span className="text-emerald-600 font-semibold">Remote</span> : <span className="truncate max-w-[100px]">{post.location || "TBD"}</span>}
+                          </div>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] text-slate-600 font-medium">
+                            <Wallet className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="truncate max-w-[90px]">{formatSalary(post.pay)}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-5 border-t border-slate-100 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-400">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {formatDate(post.created_at)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/job/${post.id}/${slugify(post.title)}`}
+                              onClick={() => trackRecentlyViewed(post)}
+                              className="flex items-center gap-2 h-9 px-5 bg-slate-900 hover:bg-blue-600 text-white rounded-full text-[13px] font-bold transition-all shadow-sm"
                             >
-                              <Bookmark className={`w-4 h-4 ${savedJobs.includes(post.id) ? 'fill-blue-600' : ''}`} />
-                            </button>
-                         </div>
-
-                         <div className="flex gap-4 mb-6">
-                            <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-2">
-                              <img
-                                src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${post.image}`}
-                                alt={`${post.title} logo`}
-                                loading="lazy"
-                                className="w-full h-full object-contain"
-                                onError={(e: any) => { e.target.src = '/logo.webp'; }}
-                              />
-                            </div>
-                            <div className="flex flex-col justify-center">
-                              <h2 className="text-[17px] font-bold text-slate-900 leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
-                                {post.role}
-                              </h2>
-                              <span className="text-[14px] text-slate-500 font-medium flex items-center gap-1.5 line-clamp-1">
-                                <Building2 className="w-3.5 h-3.5 opacity-70" /> {post.title}
-                              </span>
-                            </div>
-                         </div>
-
-                         <div className="flex flex-wrap gap-2 mb-8 mt-auto">
-                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] text-slate-600 font-medium">
-                              <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="truncate max-w-[100px]">{post.batches || "Any batch"}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] text-slate-600 font-medium">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              {isRemote(post) ? <span className="text-emerald-600 font-semibold">Remote</span> : <span className="truncate max-w-[100px]">{post.location || "TBD"}</span>}
-                            </div>
-                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[13px] text-slate-600 font-medium">
-                              <Wallet className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="truncate max-w-[90px]">{formatSalary(post.pay)}</span>
-                            </div>
-                         </div>
-
-                         <div className="pt-5 border-t border-slate-100 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-400">
-                              <Calendar className="w-3.5 h-3.5" />
-                              {formatDate(post.created_at)}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Link
-                                href={`/job/${post.id}/${slugify(post.title)}`}
-                                onClick={() => trackRecentlyViewed(post)}
-                                className="flex items-center gap-2 h-9 px-5 bg-slate-900 hover:bg-blue-600 text-white rounded-full text-[13px] font-bold transition-all shadow-sm"
-                              >
-                                View Role
-                              </Link>
-                            </div>
-                         </div>
+                              View Role
+                            </Link>
+                          </div>
+                        </div>
                       </motion.div>
                     ))}
-                   </AnimatePresence>
+                  </AnimatePresence>
                 </div>
 
                 {/* Pagination */}
@@ -630,7 +671,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                     />
                   </div>
                 )}
-               </>
+              </>
             )}
 
           </div>
@@ -643,32 +684,31 @@ export default function JobsBrowser(props: JobsBrowserProps) {
 // Subcomponent for filter sections
 function FilterSection({ title, type, options, current, onChange }: { title: string, type: string, options: string[], current: string[], onChange: (type: string, value: string) => void }) {
   const [isExpanded, setIsExpanded] = useState(true);
-  
+
   return (
     <div>
-      <div 
+      <div
         className="flex items-center justify-between mb-3 cursor-pointer group"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <h4 className="text-[14px] font-bold text-slate-900 uppercase tracking-wide group-hover:text-blue-600 transition-colors">{title}</h4>
         <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
       </div>
-      
+
       {isExpanded && (
         <div className="flex flex-col gap-2.5">
           {options.map((opt) => {
             const isActive = current.includes(opt);
             return (
               <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  className="hidden" 
-                  checked={isActive} 
-                  onChange={() => onChange(type, opt)} 
+                <input
+                  type="checkbox"
+                  className="hidden"
+                  checked={isActive}
+                  onChange={() => onChange(type, opt)}
                 />
-                <div className={`w-5 h-5 rounded-[6px] border flex items-center justify-center transition-all ${
-                  isActive ? 'bg-blue-600 border-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.25)]' : 'bg-white border-slate-300 group-hover:border-blue-400'
-                }`}>
+                <div className={`w-5 h-5 rounded-[6px] border flex items-center justify-center transition-all ${isActive ? 'bg-blue-600 border-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.25)]' : 'bg-white border-slate-300 group-hover:border-blue-400'
+                  }`}>
                   {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                 </div>
                 <span className={`text-[14px] font-medium transition-colors ${isActive ? 'text-slate-900 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>

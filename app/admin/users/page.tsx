@@ -18,21 +18,23 @@ const authH = () => ({
 type UserType = 'candidate' | 'employer';
 
 type AppUser = {
-  id: number; fullName: string; email: string; phone?: string;
+  id: number; full_name: string; email: string; phone?: string;
   location?: string; is_active: boolean; created_at: string;
   profile_image?: string; userType?: string;
+  profile_completeness?: number;
+  resume?: string;
 };
 
 export default function AdminUsersPage() {
-  const [tab,        setTab]        = useState<UserType>('candidate');
-  const [users,      setUsers]      = useState<AppUser[]>([]);
-  const [total,      setTotal]      = useState(0);
+  const [tab, setTab] = useState<UserType>('candidate');
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [page,       setPage]       = useState(1);
-  const [search,     setSearch]     = useState('');
-  const [loading,    setLoading]    = useState(true);
-  const [toggling,   setToggling]   = useState<Record<number, boolean>>({});
-  const [toast,      setToast]      = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState<Record<number, boolean>>({});
+  const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -47,14 +49,14 @@ export default function AdminUsersPage() {
       ...(search && { search }),
     });
     try {
-      const res  = await fetch(`${API}/api/admin/users?${params}`, { headers: authH() });
+      const res = await fetch(`${API}/api/admin/users?${params}`, { headers: authH() });
       const data = await res.json();
       if (data.success) {
         setUsers(data.users);
         setTotal(data.total);
         setTotalPages(data.totalPages ?? 1);
       }
-    } catch {}
+    } catch { }
     setLoading(false);
   }, [tab, page, search]);
 
@@ -64,7 +66,7 @@ export default function AdminUsersPage() {
   const toggleStatus = async (userId: number) => {
     setToggling(p => ({ ...p, [userId]: true }));
     try {
-      const res  = await fetch(`${API}/api/admin/users/${userId}/toggle-status`, { method: 'PUT', headers: authH() });
+      const res = await fetch(`${API}/api/admin/users/${userId}/toggle-status`, { method: 'PUT', headers: authH() });
       const data = await res.json();
       if (data.success) {
         setUsers(prev => prev.map(u =>
@@ -72,7 +74,24 @@ export default function AdminUsersPage() {
         ));
         showToast(data.user.is_active ? 'User activated' : 'User deactivated');
       }
-    } catch {}
+    } catch { }
+    setToggling(p => ({ ...p, [userId]: false }));
+  };
+
+  const revokePro = async (userId: number) => {
+    if (!confirm('Are you sure you want to manually revoke the Pro plan for this user? This does not start an automatic refund. Please manually deduct GST and Payment Gateway charges before refunding.')) return;
+    setToggling(p => ({ ...p, [userId]: true }));
+    try {
+      const res = await fetch(`${API}/api/admin/users/${userId}/revoke-pro`, { method: 'PUT', headers: authH() });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Pro plan revoked successfully');
+      } else {
+        showToast(data.message || 'Failed to revoke Pro plan');
+      }
+    } catch { 
+      showToast('Error revoking Pro plan');
+    }
     setToggling(p => ({ ...p, [userId]: false }));
   };
 
@@ -80,8 +99,8 @@ export default function AdminUsersPage() {
     d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '—';
 
   const TABS: { label: string; value: UserType; icon: React.ElementType }[] = [
-    { label: 'Candidates', value: 'candidate', icon: Users2   },
-    { label: 'Employers',  value: 'employer',  icon: Building2 },
+    { label: 'Candidates', value: 'candidate', icon: Users2 },
+    { label: 'Employers', value: 'employer', icon: Building2 },
   ];
 
   return (
@@ -117,11 +136,10 @@ export default function AdminUsersPage() {
             <button
               key={value}
               onClick={() => { setTab(value); setPage(1); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-bold transition-all ${
-                tab === value
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-bold transition-all ${tab === value
                   ? 'bg-white shadow-sm text-indigo-600 border border-slate-200'
                   : 'text-slate-500 hover:text-slate-800'
-              }`}
+                }`}
             >
               <Icon className="w-4 h-4" />
               {label}
@@ -162,7 +180,7 @@ export default function AdminUsersPage() {
             <table className="w-full text-left text-[13px] min-w-[720px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {['User', 'Contact', 'Location', 'Joined', 'Status', 'Action'].map(h => (
+                  {['User', 'Contact', 'Location', 'Profile', 'Joined', 'Status', 'Action'].map(h => (
                     <th key={h} className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[11px] first:pl-6">
                       {h}
                     </th>
@@ -180,12 +198,12 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-blue-600 flex items-center justify-center text-white text-[13px] font-black shrink-0 overflow-hidden">
                           {user.profile_image
-                            ? <img src={`${API}/${user.profile_image}`} alt={user.fullName} className="w-full h-full object-cover" />
-                            : (user.fullName || 'U').charAt(0).toUpperCase()
+                            ? <img src={`${API}/${user.profile_image}`} alt={user.full_name} className="w-full h-full object-cover" />
+                            : (user.full_name || 'U').charAt(0).toUpperCase()
                           }
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900 leading-tight">{user.fullName || '—'}</div>
+                          <div className="font-bold text-slate-900 leading-tight">{user.full_name || '—'}</div>
                           <div className="text-slate-500 text-[12px] font-medium">#{user.id}</div>
                         </div>
                       </div>
@@ -217,6 +235,39 @@ export default function AdminUsersPage() {
                       )}
                     </td>
 
+                    {/* Profile */}
+                    <td className="px-4 py-4">
+                      {tab === 'candidate' ? (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] font-bold text-slate-700">
+                              {user.profile_completeness ?? 0}%
+                            </span>
+                            <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
+                              <div 
+                                className="bg-indigo-600 h-1.5 rounded-full" 
+                                style={{ width: `${user.profile_completeness ?? 0}%` }}
+                              />
+                            </div>
+                          </div>
+                          {user.resume ? (
+                            <a
+                              href={`${API}/${user.resume}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:underline"
+                            >
+                              View Resume
+                            </a>
+                          ) : (
+                            <span className="text-[11px] font-medium text-slate-400">No Resume</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+
                     {/* Joined */}
                     <td className="px-4 py-4">
                       <span className="flex items-center gap-1 text-slate-500 font-medium text-[12px]">
@@ -227,11 +278,10 @@ export default function AdminUsersPage() {
 
                     {/* Status badge */}
                     <td className="px-4 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                        user.is_active !== false
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${user.is_active !== false
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : 'bg-slate-50 text-slate-500 border-slate-200'
-                      }`}>
+                        }`}>
                         {user.is_active !== false
                           ? <><CheckCircle2 className="w-3 h-3" /> Active</>
                           : <><Ban className="w-3 h-3" /> Inactive</>
@@ -241,21 +291,32 @@ export default function AdminUsersPage() {
 
                     {/* Toggle action */}
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => toggleStatus(user.id)}
-                        disabled={!!toggling[user.id]}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold border transition-all disabled:opacity-50 ${
-                          user.is_active !== false
-                            ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'
-                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200'
-                        }`}
-                      >
-                        {toggling[user.id]
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : user.is_active !== false ? <Ban className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />
-                        }
-                        {toggling[user.id] ? '…' : user.is_active !== false ? 'Deactivate' : 'Activate'}
-                      </button>
+                      <div className="flex flex-col gap-2 items-start">
+                        <button
+                          onClick={() => toggleStatus(user.id)}
+                          disabled={!!toggling[user.id]}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold border transition-all disabled:opacity-50 ${user.is_active !== false
+                              ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'
+                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200'
+                            }`}
+                        >
+                          {toggling[user.id]
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : user.is_active !== false ? <Ban className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />
+                          }
+                          {toggling[user.id] ? '…' : user.is_active !== false ? 'Deactivate' : 'Activate'}
+                        </button>
+                        
+                        <button
+                          onClick={() => revokePro(user.id)}
+                          disabled={!!toggling[user.id]}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold border transition-all disabled:opacity-50 bg-slate-50 text-slate-500 border-slate-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200"
+                          title="Revoke Pro plan without auto refund"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          Revoke PRO
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -7,7 +7,7 @@ import axios from 'axios';
 import {
   Bookmark, Eye, ChevronRight, Building2,
   MapPin, Clock, ExternalLink, Briefcase, Sparkles, Activity, Zap, Shield,
-  WifiOff, RefreshCw
+  WifiOff, RefreshCw, Target, Award, FileText, LayoutDashboard, CheckSquare
 } from 'lucide-react';
 
 function calcCompletion(profile: any): number {
@@ -31,8 +31,18 @@ export default function CandidateDashboardPage() {
   const [aiMatches, setAiMatches] = useState<any[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
   const [matchesError, setMatchesError] = useState(false);
+  
+  // Live Kanban stage metrics
+  const [trackerCounts, setTrackerCounts] = useState({
+    applied: 0,
+    interviewing: 0,
+    offered: 0,
+    rejected: 0,
+    total: 0
+  });
 
   useEffect(() => {
+    // 1. Instant load from cache
     const cached = localStorage.getItem('candidate');
     const user = cached ? JSON.parse(cached) : null;
     if (user) setProfile(user);
@@ -42,7 +52,25 @@ export default function CandidateDashboardPage() {
     setSavedCount(saved.length);
 
     const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
-    setViewedJobs(viewed.slice(0, 6));
+    setViewedJobs(viewed.slice(0, 5));
+
+    // 2. Fetch fresh profile to update credits, pro status, and health score
+    const fetchFreshProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success && res.data.user) {
+          setProfile(res.data.user);
+          localStorage.setItem('candidate', JSON.stringify(res.data.user));
+        }
+      } catch (err) {
+        console.error('Failed to sync latest profile data', err);
+      }
+    };
+    fetchFreshProfile();
 
     const fetchMatches = async () => {
       const token = localStorage.getItem('token');
@@ -55,7 +83,7 @@ export default function CandidateDashboardPage() {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
-          setAiMatches(res.data.data.slice(0, 4));
+          setAiMatches(res.data.data.slice(0, 3));
         }
         setMatchesError(false);
       } catch (err) {
@@ -64,48 +92,35 @@ export default function CandidateDashboardPage() {
       }
       setMatchesLoading(false);
     };
+
+    const fetchTrackerStats = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/tracker`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success) {
+          const trackedJobs = res.data.data || [];
+          setTrackerCounts({
+            applied: trackedJobs.filter((j: any) => j.status === 'applied').length,
+            interviewing: trackedJobs.filter((j: any) => j.status === 'interviewing').length,
+            offered: trackedJobs.filter((j: any) => j.status === 'offered').length,
+            rejected: trackedJobs.filter((j: any) => j.status === 'rejected').length,
+            total: trackedJobs.length
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load tracker stats', err);
+      }
+    };
+
     fetchMatches();
+    fetchTrackerStats();
   }, []);
 
   const completion = calcCompletion(profile);
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
-
-  const stats = [
-    {
-      label: 'Saved Jobs',
-      value: savedCount,
-      icon: Bookmark,
-      colorClass: 'bg-blue-50 text-blue-600 border-blue-100',
-      link: '/candidate-dashboard/saved-jobs',
-      cardClass: 'bg-white border border-slate-200 hover:border-blue-200',
-      valueClass: 'text-slate-900',
-      labelClass: 'text-slate-400',
-    },
-    {
-      label: 'Jobs Viewed',
-      value: viewedJobs.length,
-      icon: Eye,
-      colorClass: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-      link: null,
-      cardClass: 'bg-white border border-slate-200',
-      valueClass: 'text-slate-900',
-      labelClass: 'text-slate-400',
-    },
-    {
-      label: profile?.is_pro ? 'PRO Plan Status' : 'AI Match Credits',
-      value: profile?.is_pro ? 'Unlimited' : `${profile?.ai_credits !== undefined ? profile.ai_credits : 6} Left`,
-      icon: Zap,
-      colorClass: profile?.is_pro 
-        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-        : 'bg-indigo-50 text-indigo-600 border-indigo-100',
-      link: '/pro',
-      cardClass: profile?.is_pro
-        ? 'bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-900 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:border-amber-500/60 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)]'
-        : 'bg-white border border-slate-200 hover:border-indigo-200',
-      valueClass: profile?.is_pro ? 'text-amber-400' : 'text-slate-900',
-      labelClass: profile?.is_pro ? 'text-amber-500/80' : 'text-slate-400',
-    },
-  ];
 
   const formatDate = (d: string) => {
     if (!d) return 'Recently';
@@ -117,398 +132,390 @@ export default function CandidateDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl md:text-4xl font-black text-slate-100 font-playfair tracking-tight mb-1.5 flex flex-wrap items-center gap-3">
-          Welcome back, {firstName}! 👋
-          {profile?.is_pro ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 text-[13px] font-black uppercase tracking-widest rounded-full shadow-sm align-middle mt-1 md:mt-0">
-              <Sparkles className="w-4 h-4" /> PRO Member
-            </span>
-          ) : (
-            <Link 
-              href="/pro"
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-[13px] font-black uppercase tracking-widest rounded-full shadow-sm align-middle mt-1 md:mt-0 transition-colors cursor-pointer group"
-            >
-              BASIC Member <span className="text-[10px] text-blue-600 font-bold group-hover:translate-x-0.5 transition-transform ml-1">Upgrade ⚡</span>
-            </Link>
-          )}
-        </h1>
-        <p className="text-[15px] font-medium text-slate-500">
-          Here's your job search activity at a glance.
-        </p>
-      </div>
-
-      {/* Profile Completeness & Aggregator Notice Banner */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Profile Completeness */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
-          
-          {/* Progress Circle */}
-          <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="6" />
-              <motion.circle 
-                initial={{ strokeDashoffset: 264 }}
-                animate={{ strokeDashoffset: 264 - (264 * completion) / 100 }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                cx="50" cy="50" r="42" fill="none" 
-                stroke={completion >= 80 ? "#10b981" : "#3b82f6"} 
-                strokeWidth="6" 
-                strokeDasharray="264" 
-                strokeLinecap="round" 
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-xl font-black text-white">{completion}%</span>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-              Profile Completeness
-              {completion >= 80 && (
-                <span className="px-2.5 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-wider">High Density</span>
-              )}
-            </h3>
-            
-            {profile?.has_received_profile_bonus ? (
-              <p className="text-[13px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1.5">
-                <Sparkles className="w-4 h-4" /> You earned +3 Bonus Credits for completing your profile!
-              </p>
-            ) : completion >= 80 ? (
-              <p className="text-[13px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1.5">
-                <Sparkles className="w-4 h-4" /> You qualify for the bonus! Saved changes will reward +3 Credits.
-              </p>
-            ) : (
-              <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
-                Add Work Experience and Education to reach <strong className="text-blue-400">80% completeness</strong> and unlock **+3 Bonus AI Match Credits**!
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-1.5 mt-4">
-              {!profile?.full_name && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Name</span>}
-              {!profile?.phone && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Phone</span>}
-              {!profile?.location && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Location</span>}
-              {!profile?.bio && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Bio</span>}
-              {(!profile?.skills || profile.skills.length === 0) && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Skills</span>}
-              {!profile?.resume && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Resume</span>}
-              {(Array.isArray(profile?.work_experience) ? profile.work_experience.length === 0 : true) && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Work History</span>}
-              {(Array.isArray(profile?.education) ? profile.education.length === 0 : true) && <span className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-500 text-[10px] font-bold rounded">Education</span>}
-            </div>
-          </div>
-
-          <Link href="/candidate-dashboard/settings" className="px-5 py-2.5 bg-white hover:bg-slate-100 text-slate-950 text-[13px] font-black rounded-xl transition-all self-center sm:self-auto shrink-0 shadow-lg">
-            Complete Profile
-          </Link>
+    <div className="flex flex-col gap-8 font-sora">
+      
+      {/* ── HEADER TITLE BAR ── */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white font-playfair tracking-tight flex items-center gap-2">
+            Welcome, {firstName}! 👋
+          </h1>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+            Analyze your progress, bypass recruiter filters, and scale your active pipeline.
+          </p>
         </div>
-
-        {/* Aggregator Disclosure Notice */}
-        <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
-          <div>
-            <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5" /> Honest Disclosure
-            </h4>
-            <p className="text-[12px] text-slate-300 font-medium leading-relaxed">
-              RGJobs is a premium <strong>job aggregator</strong>. We index fresh listings directly from official company career sites. Applying will redirect you directly to their official career sites.
-            </p>
-          </div>
-          <div className="text-[10px] text-slate-500 font-bold border-t border-slate-800/50 pt-2.5 mt-3">
-            Direct Official Applications · No Gatekeeping
-          </div>
-        </div>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon;
-          const isClickable = !!stat.link;
-          const card = (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className={`rounded-[2rem] p-6 shadow-sm flex flex-col gap-4 transition-all duration-300 ${stat.cardClass} ${
-                isClickable ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${stat.colorClass}`}>
-                <Icon className="w-6 h-6" />
-              </div>
-              <div>
-                <div className={`text-4xl font-black ${stat.valueClass}`}>{stat.value}</div>
-                <div className={`text-[12px] font-bold uppercase tracking-wider mt-1 ${stat.labelClass}`}>{stat.label}</div>
-              </div>
-            </motion.div>
-          );
-          return stat.link ? (
-            <Link key={i} href={stat.link} className="block">
-              {card}
-            </Link>
-          ) : (
-            <div key={i}>{card}</div>
-          );
-        })}
-      </div>
-
-      {/* Recently Viewed Jobs */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 md:p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-black text-slate-900">Recently Viewed Jobs</h2>
-            <p className="text-[13px] text-slate-500 font-medium mt-0.5">
-              Jobs you opened will appear here for quick access.
-            </p>
-          </div>
-          <Link
-            href="/jobs"
-            className="text-[13px] font-bold text-blue-600 hover:underline flex items-center gap-1 shrink-0"
-          >
-            Browse More <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {viewedJobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 border border-blue-100">
-              <Briefcase className="w-8 h-8 text-blue-400" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">No jobs viewed yet</h3>
-            <p className="text-[14px] text-slate-500 mb-5">
-              Start browsing — jobs you visit will show up here.
-            </p>
-            <Link
-              href="/jobs"
-              className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-sm text-[14px]"
-            >
-              Explore Jobs
-            </Link>
-          </div>
+        
+        {profile?.is_pro ? (
+          <span className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-500/20">
+            <Sparkles className="w-4 h-4 text-white" /> PRO Member
+          </span>
         ) : (
-          <div className="flex flex-col gap-3">
-            {viewedJobs.map((job, i) => (
-              <motion.div
-                key={job.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}
-                className="group flex items-center gap-4 p-4 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all"
-              >
-                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 p-1.5">
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${job.image}`}
-                    alt={job.title}
-                    className="w-full h-full object-contain"
-                    onError={(e: any) => { e.target.src = '/logo.webp'; }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[15px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                    {job.role}
-                  </div>
-                  <div className="flex items-center gap-3 text-[12px] text-slate-500 font-medium mt-0.5 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <Building2 className="w-3 h-3" /> {job.title}
-                    </span>
-                    {job.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {job.location}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {formatDate(job.created_at)}
-                    </span>
-                  </div>
-                </div>
-                <Link
-                  href={`/job/${job.id}/${job.slug || job.id}`}
-                  className="shrink-0 w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          <Link
+            href="/pro"
+            className="inline-flex items-center gap-1.5 px-4.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+          >
+            Upgrade to PRO <Zap className="w-3.5 h-3.5 fill-white" />
+          </Link>
         )}
       </div>
 
-      {/* AI Analyzed Opportunities */}
-      <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 md:p-8 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      {/* ── MAIN 8:4 SaaS WORKSPACE GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        <div className="flex items-center justify-between mb-6 relative z-10">
-          <div>
-            <h2 className="text-xl font-black text-white flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-400 fill-blue-400/20" /> My AI Matches
-            </h2>
-            <p className="text-[13px] text-slate-400 font-medium mt-0.5">
-              Review your ATS scores and interview prep for jobs you've analyzed.
-            </p>
+        {/* ================= LEFT MAIN WORKSPACE COLUMN (lg:col-span-8) ================= */}
+        <div className="lg:col-span-8 space-y-8">
+          
+          {/* A. Core SaaS Verification & Reminder Panel */}
+          <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-36 h-36 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-36 h-36 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5" /> Workspace Curation Active
+                </span>
+                <h3 className="text-[16px] font-black text-white">Direct Sourcing Portals Sourced</h3>
+                <p className="text-xs text-slate-400 font-semibold leading-relaxed max-w-lg">
+                  Every application routes you directly to official company career domains. We do not gatekeep or harvest candidate data.
+                </p>
+              </div>
+              <div className="flex flex-row md:flex-col items-center md:items-end gap-3 justify-between w-full md:w-auto border-t border-slate-800 md:border-none pt-4 md:pt-0">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider rounded-lg">
+                  <span className="w-1.5 h-1.5 bg-emerald-450 rounded-full animate-ping" />
+                  Live Sync
+                </span>
+                <span className="text-[11px] text-slate-550 font-bold uppercase tracking-wider text-slate-500">100% Direct Apply</span>
+              </div>
+            </div>
+            
+            {/* Quick SaaS Verification Badges */}
+            <div className="grid grid-cols-3 gap-3 border-t border-slate-850 pt-5 mt-5 text-left">
+              {[
+                { label: "Parsed Resume", ok: !!profile?.resume, msg: profile?.resume ? "Optimized ✓" : "Upload Missing ⚠", href: "/candidate-dashboard/settings" },
+                { label: "Profile Depth", ok: completion >= 80, msg: completion >= 80 ? "Sufficient ✓" : `${completion}% Strength ⚠`, href: "/candidate-dashboard/settings" },
+                { label: "Kanban Pipelines", ok: trackerCounts.total > 0, msg: trackerCounts.total > 0 ? `${trackerCounts.total} Active ✓` : "0 Tracked ⚠", href: "/candidate-dashboard/tracker" }
+              ].map((item, idx) => (
+                <Link key={idx} href={item.href} className="group bg-slate-950/40 hover:bg-slate-950/80 border border-slate-850 rounded-2xl p-3.5 transition-all">
+                  <span className="block text-[9px] font-bold text-slate-550 uppercase tracking-widest text-slate-500">{item.label}</span>
+                  <span className={`block text-xs font-black mt-1 group-hover:text-blue-400 transition-colors ${item.ok ? 'text-emerald-400' : 'text-amber-500'}`}>{item.msg}</span>
+                </Link>
+              ))}
+            </div>
           </div>
-          <Link
-            href="/jobs"
-            className="text-[13px] font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 shrink-0"
-          >
-            Find Matches <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
 
-        {matchesLoading ? (
-          <div className="flex justify-center py-10">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : matchesError ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
-            <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mb-4 border border-rose-500/20">
-              <WifiOff className="w-8 h-8 text-rose-400" />
+          {/* B. Dynamic Interactive Kanban Tracker Widget */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 md:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+            <div className="flex justify-between items-center mb-6 text-left">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Target className="w-5 h-5 text-blue-500" /> Career Kanban Pipeline
+                </h3>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">Automate follow-up invite scripts and company interview guides stage-by-stage.</p>
+              </div>
+              <Link href="/candidate-dashboard/tracker" className="text-xs font-black text-blue-600 hover:text-blue-500 flex items-center gap-1">
+                View Tracker <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">Unable to load matches</h3>
-            <p className="text-[14px] text-slate-400 mb-5 max-w-sm">
-              Could not connect to the server. Please check your internet connection and try again.
-            </p>
-            <button
-              onClick={() => {
-                setMatchesLoading(true);
-                setMatchesError(false);
-                const token = localStorage.getItem('token');
-                if (token) {
-                  axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/my-ai-matches`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                  }).then(res => {
-                    if (res.data.success) setAiMatches(res.data.data.slice(0, 4));
-                    setMatchesError(false);
-                  }).catch(() => setMatchesError(true))
-                  .finally(() => setMatchesLoading(false));
-                }
-              }}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20 text-[14px]"
-            >
-              <RefreshCw className="w-4 h-4" /> Retry
-            </button>
-          </div>
-        ) : aiMatches.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
-            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-700">
-              <Activity className="w-8 h-8 text-slate-500" />
+
+            {/* Horizontal Kanban stage indicators */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { stage: "applied" as const, name: "Applied", count: trackerCounts.applied, color: "border-l-blue-500 text-blue-500 bg-blue-500/5 hover:border-blue-500/30" },
+                { stage: "interviewing" as const, name: "Interviewing", count: trackerCounts.interviewing, color: "border-l-indigo-500 text-indigo-500 bg-indigo-500/5 hover:border-indigo-500/30" },
+                { stage: "offered" as const, name: "Offered", count: trackerCounts.offered, color: "border-l-emerald-500 text-emerald-500 bg-emerald-500/5 hover:border-emerald-500/30" },
+                { stage: "rejected" as const, name: "Rejected", count: trackerCounts.rejected, color: "border-l-rose-500 text-rose-500 bg-rose-500/5 hover:border-rose-500/30" }
+              ].map((column) => (
+                <Link key={column.stage} href="/candidate-dashboard/tracker" className={`border border-slate-200 dark:border-slate-800 border-l-4 ${column.color} rounded-2xl p-4 transition-all duration-300 hover:scale-[1.02] text-left block`}>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-450 dark:text-slate-400 block">{column.name}</span>
+                  <div className="flex justify-between items-baseline mt-2">
+                    <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">{column.count}</span>
+                    <span className="text-[9px] font-bold text-slate-405 dark:text-slate-500 uppercase tracking-widest">Active</span>
+                  </div>
+                </Link>
+              ))}
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">No AI Analyses Yet</h3>
-            <p className="text-[14px] text-slate-400 mb-5 max-w-sm">
-              Use your credits to analyze jobs and get instant match scores, cover letters, and interview questions.
-            </p>
-            <Link
-              href="/jobs"
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20 text-[14px]"
-            >
-              Analyze Jobs
-            </Link>
+
+            {trackerCounts.total === 0 && (
+              <div className="mt-5 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-2xl text-left flex gap-3 items-start">
+                <Sparkles className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5 animate-pulse" />
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white">Track Your First Role to Get AI Follow-ups</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Paste any targeted job descriptions to calculate keyword deficiencies and get dynamic STAR interview preparation question banks.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-            {aiMatches.map((match, i) => {
-              const score = match.match_score;
-              let colors = "bg-rose-500/10 border-rose-500/20 text-rose-400";
-              if (score >= 80) colors = "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
-              else if (score >= 60) colors = "bg-amber-500/10 border-amber-500/20 text-amber-400";
-              
-              return (
-                <Link key={match.id} href={`/job/${match.job.id}/${match.job.slug || match.job.id}?autoAnalyze=true`}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="group bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-2xl p-5 transition-all cursor-pointer h-full flex flex-col"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex gap-3 items-center">
-                        <div className="w-10 h-10 rounded-lg bg-white p-1 shrink-0 overflow-hidden">
-                          <img
-                            src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${match.job.image}`}
-                            alt={match.job.title}
-                            className="w-full h-full object-contain"
-                            onError={(e: any) => { e.target.src = '/logo.webp'; }}
-                          />
-                        </div>
+
+          {/* C. Flagship AI Compatibility Matches Feed */}
+          <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+            
+            <div className="flex items-center justify-between mb-6 relative z-10 text-left">
+              <div>
+                <h2 className="text-xl font-black text-white flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-blue-400 fill-blue-400/20" /> ATS Compatibility Matches
+                </h2>
+                <p className="text-[13px] text-slate-400 font-medium mt-0.5">
+                  Review calculated match densities, custom cover letter downloads, and STAR questions.
+                </p>
+              </div>
+              <Link href="/jobs" className="text-[13px] font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 shrink-0">
+                Find Vacancies <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {matchesLoading ? (
+              <div className="flex justify-center py-10">
+                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : matchesError ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
+                <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mb-4 border border-rose-500/20">
+                  <WifiOff className="w-8 h-8 text-rose-400" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Unable to load matches</h3>
+                <p className="text-[14px] text-slate-400 mb-5 max-w-sm">Could not connect to the database. Please try again.</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg text-[14px]"
+                >
+                  <RefreshCw className="w-4 h-4" /> Retry
+                </button>
+              </div>
+            ) : aiMatches.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
+                <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-700">
+                  <Activity className="w-8 h-8 text-slate-500" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">No AI Compatibility Scans</h3>
+                <p className="text-[14px] text-slate-400 mb-5 max-w-sm">Use your active wallet credits on any job page to run parsing check comparisons.</p>
+                <Link href="/jobs" className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-550 transition-colors shadow-lg text-[14px]">
+                  Explore Job Postings
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                {aiMatches.map((match, i) => {
+                  const score = match.match_score;
+                  let colors = "bg-rose-500/10 border-rose-500/20 text-rose-400";
+                  let radial = "stroke-rose-500";
+                  if (score >= 80) {
+                    colors = "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+                    radial = "stroke-emerald-500";
+                  } else if (score >= 60) {
+                    colors = "bg-amber-500/10 border-amber-500/20 text-amber-400";
+                    radial = "stroke-amber-500";
+                  }
+                  
+                  return (
+                    <Link key={match.id} href={`/job/${match.job.id}/${match.job.slug || match.job.id}?autoAnalyze=true`}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="group bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-2xl p-5 transition-all cursor-pointer h-full flex flex-col justify-between"
+                      >
                         <div>
-                          <h4 className="text-[15px] font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">{match.job.role}</h4>
-                          <p className="text-[12px] text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Building2 className="w-3 h-3" /> {match.job.title}
+                          <div className="flex justify-between items-start mb-3 text-left">
+                            <div className="flex gap-3 items-center min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-white p-1 shrink-0 overflow-hidden">
+                                <img
+                                  src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${match.job.image}`}
+                                  alt={match.job.title}
+                                  className="w-full h-full object-contain"
+                                  onError={(e: any) => { e.target.src = '/logo.webp'; }}
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-[15px] font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">{match.job.role}</h4>
+                                <p className="text-[12px] text-slate-400 flex items-center gap-1 mt-0.5 line-clamp-1">
+                                  <Building2 className="w-3 h-3 shrink-0" /> {match.job.title}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Visual Score Ring */}
+                            <div className="relative w-11 h-11 shrink-0 flex items-center justify-center">
+                              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#334155" strokeWidth="2.5" />
+                                <circle cx="18" cy="18" r="16" fill="none" className={radial} strokeWidth="2.5" strokeDasharray="100" strokeDashoffset={100 - score} strokeLinecap="round" />
+                              </svg>
+                              <span className="absolute text-[11px] font-black text-white">{score}%</span>
+                            </div>
+                          </div>
+                          <p className="text-[13px] text-slate-450 text-slate-450 text-slate-400 line-clamp-2 mt-2 leading-relaxed text-left">
+                            {match.ai_feedback}
                           </p>
                         </div>
-                      </div>
-                      <div className={`px-2.5 py-1 rounded-lg ${colors} font-black text-[14px] flex items-center gap-1`}>
-                        {score}% <span className="text-[10px] uppercase font-bold text-slate-500 ml-0.5">Match</span>
-                      </div>
-                    </div>
-                    <p className="text-[13px] text-slate-400 line-clamp-2 mt-2 leading-relaxed flex-1">
-                      {match.ai_feedback}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-slate-700/50 flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                      <span>{formatDate(match.updated_at)}</span>
-                      <span className="text-blue-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                        Review Prep <ChevronRight className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </motion.div>
-                </Link>
-              );
-            })}
+                        
+                        <div className="mt-4 pt-3 border-t border-slate-700/50 flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                          <span>{formatDate(match.updated_at)}</span>
+                          <span className="text-blue-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                            Review Prep <ChevronRight className="w-3 h-3" />
+                          </span>
+                        </div>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* CTA Banner */}
-      {!profile?.is_pro ? (
-        <div className="relative bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 rounded-[2rem] p-8 md:p-10 text-white overflow-hidden shadow-2xl">
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-300 text-xs font-bold uppercase tracking-widest mb-3 border border-blue-500/30">
-                <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Unlock Premium
+        {/* ================= RIGHT WORKSPACE SIDEBAR COLUMN (lg:col-span-4) ================= */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* A. Unified ATS Resume Monitor Card */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] text-left relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
+            
+            <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-4 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" /> Resume Health Score
+            </span>
+            
+            <div className="flex items-center gap-5 mb-5">
+              {/* CircularSVG Gauge */}
+              <div className="relative w-18 h-18 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="7" />
+                  <motion.circle 
+                    initial={{ strokeDashoffset: 264 }}
+                    animate={{ strokeDashoffset: 264 - (264 * completion) / 100 }}
+                    transition={{ duration: 1.2 }}
+                    cx="50" cy="50" r="42" fill="none" 
+                    stroke={completion >= 80 ? "#10b981" : "#3b82f6"} 
+                    strokeWidth="7" 
+                    strokeDasharray="264" 
+                    strokeLinecap="round" 
+                  />
+                </svg>
+                <span className="absolute text-lg font-black text-slate-900 dark:text-white">{completion}%</span>
               </div>
-              <h3 className="text-2xl font-black mb-2 font-playfair">Upgrade to PRO Status</h3>
-              <p className="text-blue-200/80 font-medium text-[15px] max-w-xl">
-                Get unlimited AI resume matches, tailored cover letters, and bypass ATS filters to land your dream job faster.
-              </p>
+              
+              <div>
+                <h4 className="font-black text-slate-900 dark:text-white leading-tight">ATS Parse Density</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">
+                  {completion >= 80 ? "Your resume has high structural parse integrity." : "Complete skills and experiences to boost crawl rating."}
+                </p>
+              </div>
             </div>
-            <Link
-              href="/pro"
-              className="px-7 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-black hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap text-[14px] text-center shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-            >
-              Upgrade Now
+
+            {/* Checklist items */}
+            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-4 text-xs font-bold text-slate-600 dark:text-slate-400">
+              <div className="flex justify-between">
+                <span>File Format Readable</span>
+                <span className={profile?.resume ? 'text-emerald-500' : 'text-rose-500'}>{profile?.resume ? 'YES' : 'MISSING'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Structure Standardized</span>
+                <span className={completion >= 50 ? 'text-emerald-500' : 'text-amber-500'}>{completion >= 50 ? 'YES' : 'LOW DENSITY'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact info parsed</span>
+                <span className={profile?.phone ? 'text-emerald-500' : 'text-rose-500'}>{profile?.phone ? 'YES' : 'MISSING'}</span>
+              </div>
+            </div>
+
+            <Link href="/resume-health" className="w-full py-3.5 bg-slate-900 hover:bg-slate-850 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 mt-5">
+              <Activity className="w-4 h-4" /> Re-scan ATS PDF
             </Link>
           </div>
-          <div className="absolute right-0 top-0 w-72 h-72 bg-blue-500 opacity-20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-          <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-indigo-400 opacity-20 rounded-full blur-3xl pointer-events-none" />
-        </div>
-      ) : (
-        <div className="relative bg-gradient-to-r from-slate-900 via-emerald-950 to-teal-900 rounded-[2rem] p-8 md:p-10 text-white overflow-hidden shadow-2xl">
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-300 text-xs font-bold uppercase tracking-widest mb-3 border border-emerald-500/30">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> PRO Active
+
+          {/* B. Glowing Credits & Refill B2C Balance Card */}
+          <div className={`rounded-[2rem] p-6 shadow-md flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 ${
+            profile?.is_pro
+              ? 'bg-gradient-to-br from-slate-950 via-amber-950/20 to-slate-950 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:border-amber-500/60'
+              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-200'
+          }`}>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
+            
+            <div className="flex justify-between items-start mb-4">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center border ${
+                profile?.is_pro
+                  ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-md shadow-amber-500/10 animate-pulse'
+                  : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 border-indigo-100 dark:border-indigo-850'
+              }`}>
+                <Zap className="w-5.5 h-5.5" />
               </div>
-              <h3 className="text-2xl font-black mb-2 font-playfair">Ready for your next opportunity?</h3>
-              <p className="text-emerald-100/80 font-medium text-[15px] max-w-xl">
-                Your profile is boosted. Explore thousands of fresh premium job listings curated just for you.
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI Wallet balance</span>
+            </div>
+
+            <div>
+              <div className={`text-3.5xl font-black leading-none ${profile?.is_pro ? 'text-amber-400' : 'text-slate-900 dark:text-white'}`}>
+                {profile?.is_pro ? 'Unlimited' : `${profile?.ai_credits !== undefined ? profile.ai_credits : 6} Left`}
+              </div>
+              <div className="text-[11px] font-bold text-slate-455 text-slate-450 text-slate-400 uppercase tracking-widest mt-1.5">
+                {profile?.is_pro ? 'SaaS Unlimited Active' : 'AI Match scan credits'}
+              </div>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-2.5 leading-relaxed">
+                {profile?.is_pro 
+                  ? "Enjoy infinite technical checks, resume optimizer parses, and Cover Letter vector downloads." 
+                  : "Refill credits for quick match diagnostics or get a full PRO pass for unlimited scans."}
               </p>
             </div>
-            <Link
-              href="/jobs"
-              className="px-7 py-3.5 bg-white text-slate-900 rounded-xl font-black hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap text-[14px] text-center"
-            >
-              Browse Premium Jobs →
+
+            <Link href="/pro" className={`w-full py-3.5 text-center text-xs font-black rounded-xl transition-all shadow-md mt-5 block ${
+              profile?.is_pro 
+                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/10'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/10'
+            }`}>
+              {profile?.is_pro ? "Manage PRO Plan" : "Refill Credits (₹29)"}
             </Link>
           </div>
-          <div className="absolute right-0 top-0 w-72 h-72 bg-emerald-500 opacity-10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-          <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-teal-400 opacity-10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* C. Sleek Direct Sourcing Activity Timeline Log */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] text-left relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
+            
+            <div className="flex justify-between items-center mb-5">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block flex items-center gap-1">
+                <Bookmark className="w-3.5 h-3.5" /> Sourcing Activity Log
+              </span>
+              <span className="px-2 py-0.5 text-[9px] font-black text-slate-450 dark:text-slate-400 bg-slate-100 dark:bg-slate-850 rounded">View History</span>
+            </div>
+
+            {viewedJobs.length === 0 ? (
+              <div className="py-8 text-center">
+                <Briefcase className="w-8 h-8 text-slate-300 mx-auto mb-2.5" />
+                <p className="text-xs text-slate-500 font-semibold">Activity log empty. Visited direct jobs will record here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 relative pl-3.5 border-l border-slate-150 dark:border-slate-800">
+                {viewedJobs.map((job) => (
+                  <div key={job.id} className="relative group/timeline">
+                    {/* Circle marker */}
+                    <div className="absolute -left-[19px] top-1.5 w-2 h-2 rounded-full bg-slate-300 group-hover/timeline:bg-blue-500 transition-colors border-2 border-white dark:border-slate-900" />
+                    
+                    <div className="min-w-0">
+                      <Link href={`/job/${job.id}/${job.slug || job.id}`} className="block">
+                        <span className="block text-[13px] font-black text-slate-950 dark:text-white line-clamp-1 group-hover/timeline:text-blue-500 transition-colors leading-tight">
+                          {job.role}
+                        </span>
+                        <span className="block text-[11px] text-slate-500 font-medium mt-0.5 truncate">
+                          {job.title} · {job.location || 'Remote'}
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-400">
+              <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-blue-400" /> Direct Curation</span>
+              <Link href="/jobs" className="text-blue-500 hover:underline">Find Jobs</Link>
+            </div>
+          </div>
+
         </div>
-      )}
+
+      </div>
 
     </div>
   );
 }
+

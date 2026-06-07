@@ -25,27 +25,28 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
+  title: "RGJobs — AI Career Intelligence Platform | Resume Audit, ATS Optimizer & Application Tracker",
   description:
-    "Curated tech jobs sourced directly from official company career pages. Free ATS keyword analysis, AI cover letter generator, STAR interview prep, and INR salary benchmarks. Apply directly on employer sites — zero middlemen, 100% transparent.",
+    "Career Intelligence Platform for ambitious tech professionals. Free 6-dimension ATS resume audit, AI skill-gap analysis, personalized interview coaching, application pipeline tracker, and salary benchmarks. Opportunities sourced directly from 890+ corporate career pages — zero middlemen, 100% transparent.",
   keywords: [
-    "jobs",
-    "job portal",
-    "tech jobs India",
+    "career intelligence platform",
     "ATS resume checker",
-    "AI job matching",
-    "cover letter generator",
-    "freshers jobs",
+    "AI career tools",
+    "resume audit",
+    "application tracker",
+    "career management",
+    "skill gap analysis",
+    "interview prep",
+    "tech careers India",
     "remote jobs India",
-    "internships 2025 2026",
   ],
   verification: {
     google: "cMXxHXt8iDBLnyGweMvFDeotRL46bZ5KIVkFUEA2Mew",
   },
   openGraph: {
-    title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
+    title: "RGJobs — AI Career Intelligence Platform",
     description:
-      "Free ATS keyword analysis, AI cover letters, interview prep & salary benchmarks. Curated tech jobs from top companies — apply directly.",
+      "Free ATS resume audit, AI skill-gap analysis, interview coaching & application tracker. Opportunities sourced from 890+ companies — apply directly.",
     type: "website",
     url: "https://www.rgjobs.in",
     siteName: "RGJobs",
@@ -54,15 +55,15 @@ export const metadata: Metadata = {
         url: "https://www.rgjobs.in/og-image.png",
         width: 1200,
         height: 630,
-        alt: "RGJobs — AI-Powered Job Portal",
+        alt: "RGJobs — AI Career Intelligence Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "RGJobs — AI-Powered Job Portal for Indian Tech Talent",
+    title: "RGJobs — AI Career Intelligence Platform",
     description:
-      "Free ATS keyword analysis, AI cover letters, and curated tech jobs. Apply directly — 100% transparent.",
+      "Free ATS resume audit, AI skill-gap analysis, and career tools. Opportunities from 890+ companies — apply directly, 100% transparent.",
     images: ["https://www.rgjobs.in/og-image.png"],
   },
 };

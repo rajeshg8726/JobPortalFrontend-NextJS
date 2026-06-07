@@ -51,23 +51,47 @@ export default function Login() {
         // Merge anonymously saved jobs
         if (userType === 'Candidate' && data.user?.id) {
             const anonSaved = JSON.parse(localStorage.getItem('savedJobs_anonymous') || '[]');
-            const anonDetails = JSON.parse(localStorage.getItem('savedJobsDetails_anonymous') || '{}');
-            
+            const userSavedKey = `savedJobs_${data.user.id}`;
+            const userDetailsKey = `savedJobsDetails_${data.user.id}`;
+
+            // Sync anonymous saved jobs to backend database
             if (anonSaved.length > 0) {
-                const userSavedKey = `savedJobs_${data.user.id}`;
-                const userDetailsKey = `savedJobsDetails_${data.user.id}`;
-                
-                const userSaved = JSON.parse(localStorage.getItem(userSavedKey) || '[]');
-                const userDetails = JSON.parse(localStorage.getItem(userDetailsKey) || '{}');
-                
-                const mergedSaved = Array.from(new Set([...userSaved, ...anonSaved]));
-                const mergedDetails = { ...userDetails, ...anonDetails };
-                
-                localStorage.setItem(userSavedKey, JSON.stringify(mergedSaved));
-                localStorage.setItem(userDetailsKey, JSON.stringify(mergedDetails));
-                
+                for (const jobId of anonSaved) {
+                    try {
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidate/jobs/${jobId}/save`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${data.token}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Failed to sync anonymous job:', jobId, e);
+                    }
+                }
                 localStorage.removeItem('savedJobs_anonymous');
                 localStorage.removeItem('savedJobsDetails_anonymous');
+            }
+
+            // Pull authoritative saved jobs from database
+            try {
+                const syncRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidate/saved-jobs`, {
+                    headers: {
+                        'Authorization': `Bearer ${data.token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const syncData = await syncRes.json();
+                if (syncData.success) {
+                    localStorage.setItem(userSavedKey, JSON.stringify(syncData.saved_job_ids));
+                    const detailsMap: Record<string, any> = {};
+                    syncData.saved_jobs.forEach((j: any) => {
+                        detailsMap[String(j.id)] = j;
+                    });
+                    localStorage.setItem(userDetailsKey, JSON.stringify(detailsMap));
+                }
+            } catch (e) {
+                console.error('Failed to pull cloud saved jobs:', e);
             }
         }
         

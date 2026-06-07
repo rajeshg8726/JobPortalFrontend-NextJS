@@ -39,7 +39,9 @@ import {
   UserRoundPen,
   FileCheck,
   RefreshCw,
-  Shield
+  Shield,
+  Target,
+  Layers
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -50,11 +52,11 @@ function RadarChart({ breakdown, isPro }: { breakdown: Record<string, number> | 
   if (!breakdown) return null;
   const cx = 100, cy = 95, r = 60;
   const axes = [
-    { key: 'technical_skills',    label: 'Technical',  max: 40 },
-    { key: 'experience_relevance',label: 'Experience', max: 25 },
-    { key: 'education',           label: 'Education',  max: 10 },
-    { key: 'soft_skills',         label: 'Soft Skills',max: 15 },
-    { key: 'keyword_match',       label: 'Keywords',   max: 10 },
+    { key: 'technical_skills', label: 'Technical', max: 40 },
+    { key: 'experience_relevance', label: 'Experience', max: 25 },
+    { key: 'education', label: 'Education', max: 10 },
+    { key: 'soft_skills', label: 'Soft Skills', max: 15 },
+    { key: 'keyword_match', label: 'Keywords', max: 10 },
   ];
   const n = axes.length;
   const angles = axes.map((_, i) => -Math.PI / 2 + (2 * Math.PI * i) / n);
@@ -62,8 +64,8 @@ function RadarChart({ breakdown, isPro }: { breakdown: Record<string, number> | 
   const poly = (pts: { x: number; y: number }[]) => pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const levels = [0.25, 0.5, 0.75, 1.0];
   const outerPts = angles.map(a => pt(r, a));
-  const dataPts  = axes.map((axis, i) => {
-    const val  = Number(breakdown?.[axis.key] ?? 0);
+  const dataPts = axes.map((axis, i) => {
+    const val = Number(breakdown?.[axis.key] ?? 0);
     const norm = Math.min(val / axis.max, 1);
     return pt(r * norm, angles[i]);
   });
@@ -117,11 +119,10 @@ const Toast = ({ message, type, onClose }: any) => {
       initial={{ opacity: 0, y: 50, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
-      className={`fixed bottom-6 right-6 z-[9999] px-6 py-4 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] backdrop-blur-2xl border flex items-center gap-3 font-semibold text-[14px] ${
-        type === "success" 
-          ? "bg-slate-900/90 border-slate-700 text-white" 
+      className={`fixed bottom-6 right-6 z-[9999] px-6 py-4 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] backdrop-blur-2xl border flex items-center gap-3 font-semibold text-[14px] ${type === "success"
+          ? "bg-slate-900/90 border-slate-700 text-white"
           : "bg-blue-600/90 border-blue-500 text-white"
-      }`}
+        }`}
     >
       {type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
       {message}
@@ -137,7 +138,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const [loading, setLoading] = useState<boolean>(!initialJob);
   const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{msg: string, type: string} | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ msg: string, type: string } | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [matchFeedback, setMatchFeedback] = useState<string | null>(null);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
@@ -149,6 +150,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const [salaryBenchmark, setSalaryBenchmark] = useState<any>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [requiresUpgrade, setRequiresUpgrade] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [optimizedProfile, setOptimizedProfile] = useState<string | null>(null);
@@ -159,6 +161,8 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const [originalBio, setOriginalBio] = useState<string>('');
   const [isPro, setIsPro] = useState<boolean>(false);
   const [aiProvider, setAiProvider] = useState<string | null>(null);
+  const [isTracked, setIsTracked] = useState(false);
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -169,15 +173,43 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   }, [id, initialJob]);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('candidate') || 'null');
-    const userId = user?.id || 'anonymous';
-    const saved = localStorage.getItem(`savedJobs_${userId}`);
-    if (saved) {
-      const savedJobs = JSON.parse(saved);
-      setIsSaved(savedJobs.includes(parseInt(id)));
+    try {
+      const user = JSON.parse(localStorage.getItem('candidate') || 'null');
+      const userId = user?.id || 'anonymous';
+      const token = localStorage.getItem('token');
+      const saved = localStorage.getItem(`savedJobs_${userId}`);
+      if (saved) {
+        const savedJobs = JSON.parse(saved);
+        setIsSaved(savedJobs.includes(parseInt(id)));
+      }
+      setOriginalBio(user?.bio || '');
+      setIsPro(!!(user?.is_pro));
+
+      // Sync saved jobs from backend in background
+      if (token && user?.id) {
+        fetch(`${backendURL || 'http://localhost:8000'}/api/candidate/saved-jobs`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setIsSaved(data.saved_job_ids.includes(parseInt(id)));
+            localStorage.setItem(`savedJobs_${userId}`, JSON.stringify(data.saved_job_ids));
+            const detailsMap: Record<string, any> = {};
+            data.saved_jobs.forEach((j: any) => {
+              detailsMap[String(j.id)] = j;
+            });
+            localStorage.setItem(`savedJobsDetails_${userId}`, JSON.stringify(detailsMap));
+          }
+        })
+        .catch(err => console.error('Failed to sync saved jobs from database:', err));
+      }
+    } catch (e) {
+      console.error("Error loading profile details in JobDetailClient:", e);
     }
-    setOriginalBio(user?.bio || '');
-    setIsPro(!!(user?.is_pro));
   }, [id]);
 
   const fetchJobDetails = async () => {
@@ -196,15 +228,16 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const handleSaveJob = () => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
     const savedKey = `savedJobs_${userId}`;
     const detailsKey = `savedJobsDetails_${userId}`;
 
     const savedId = parseInt(id);
     const saved = localStorage.getItem(savedKey);
     let savedJobs = saved ? JSON.parse(saved) : [];
-    
+
     const details = JSON.parse(localStorage.getItem(detailsKey) || '{}');
-    
+
     if (isSaved) {
       savedJobs = savedJobs.filter((i: number) => i !== savedId);
       delete details[String(savedId)];
@@ -225,10 +258,23 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       }
       setToastMessage({ msg: 'Opportunity securely saved!', type: 'success' });
     }
-    
+
     localStorage.setItem(savedKey, JSON.stringify(savedJobs));
     localStorage.setItem(detailsKey, JSON.stringify(details));
     setIsSaved(!isSaved);
+
+    // Sync with backend database in background
+    if (token && user?.id) {
+      const url = `${backendURL || 'http://localhost:8000'}/api/candidate/jobs/${savedId}/save`;
+      fetch(url, {
+        method: isSaved ? 'DELETE' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .catch(err => console.error('Failed to sync save state to backend database:', err));
+    }
   };
 
   const handleShare = async () => {
@@ -271,7 +317,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const calculateAIMatch = async (skipProfileCheck?: boolean | any, forceRefresh: boolean = false) => {
     const token = localStorage.getItem('token');
     const userType = localStorage.getItem('userType');
-    
+
     if (!token || userType !== 'Candidate') {
       setShowLoginModal(true);
       return;
@@ -297,27 +343,55 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
             setShowProfileAlert(true);
             return;
           }
-        } catch(e) {}
+        } catch (e) { }
       }
     }
 
+    // Set logs interval for retro terminal Proof-of-Work UI
+    setTerminalLogs(['⚙️ Initializing RGJobs AI Matcher...']);
     setMatchLoading(true);
+
+    const logsList = [
+      '📂 Fetching candidate profile and resume...',
+      '🔍 Parsing resume text & structure...',
+      `🤖 Cross-referencing against "${job?.role || 'Job'}" requirements...`,
+      '📊 Running ATS score matching calculations...',
+      '✍️ Drafting matching Cover Letter & interview questions...',
+      '✨ Hydrating final report dashboard...'
+    ];
+
+    let logIdx = 0;
+    const logInterval = setInterval(() => {
+      if (logIdx < logsList.length) {
+        setTerminalLogs(prev => [...prev, logsList[logIdx]]);
+        logIdx++;
+      } else {
+        clearInterval(logInterval);
+      }
+    }, 1100);
+
     try {
       const response = await axios.post(
         `${backendURL}/api/candidate/generate-match`,
         { job_id: id, force_refresh: forceRefresh },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
+      // Psychological delay to ensure candidate fully witnesses the proof of work
+      if (logIdx < logsList.length) {
+        await new Promise(resolve => setTimeout(resolve, (logsList.length - logIdx) * 1050));
+      }
+      clearInterval(logInterval);
+
       if (response.data.success) {
         const aiData = response.data.data;
         setMatchScore(aiData.match_score);
         setMatchFeedback(aiData.ai_feedback);
-        
+
         if (aiData.missing_keywords) {
           try {
             setMissingKeywords(typeof aiData.missing_keywords === 'string' ? JSON.parse(aiData.missing_keywords) : aiData.missing_keywords);
-          } catch(e) { setMissingKeywords([]); }
+          } catch (e) { setMissingKeywords([]); }
         }
         setCoverLetter(aiData.cover_letter || null);
 
@@ -325,18 +399,18 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
         if (aiData.interview_questions) {
           try {
             setInterviewQuestions(typeof aiData.interview_questions === 'string' ? JSON.parse(aiData.interview_questions) : aiData.interview_questions);
-          } catch(e) { setInterviewQuestions([]); }
+          } catch (e) { setInterviewQuestions([]); }
         }
         if (aiData.salary_benchmark) {
           try {
             setSalaryBenchmark(typeof aiData.salary_benchmark === 'string' ? JSON.parse(aiData.salary_benchmark) : aiData.salary_benchmark);
-          } catch(e) { setSalaryBenchmark(null); }
+          } catch (e) { setSalaryBenchmark(null); }
         }
         setOptimizedProfile(aiData.optimized_profile || null);
         if (aiData.score_breakdown) {
           try {
             setScoreBreakdown(typeof aiData.score_breakdown === 'string' ? JSON.parse(aiData.score_breakdown) : aiData.score_breakdown);
-          } catch(e) { setScoreBreakdown(null); }
+          } catch (e) { setScoreBreakdown(null); }
         }
 
         // Track AI provider for premium badge
@@ -345,8 +419,9 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
         setToastMessage({ msg: response.data.ai_provider === 'premium' ? '✨ Premium AI Analysis complete!' : 'AI Analysis complete!', type: 'success' });
       }
     } catch (err: any) {
+      clearInterval(logInterval);
       console.error('AI Match Error:', err);
-      
+
       // Catch "Out of Credits" error from backend (usually 402 or custom flag)
       if (err.response?.status === 402 || err.response?.data?.requires_upgrade) {
         setRequiresUpgrade(true);
@@ -373,38 +448,38 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
     setIsDownloading('pdf');
     try {
       const doc = new jsPDF();
-      
+
       // Document styling & spacing
       const margin = 20;
       const pageWidth = 210; // A4 standard width in mm
       const maxLineWidth = pageWidth - (margin * 2);
-      
+
       // 1. Premium Letter Header
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
       doc.setTextColor(15, 23, 42); // slate-900
       doc.text("COVER LETTER", margin, 35);
-      
+
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(100, 116, 139); // slate-500
       doc.text("GENERATED VIA RGJOBS AI", margin, 42);
-      
+
       // Elegant horizontal divider line
       doc.setDrawColor(226, 232, 240); // slate-200
       doc.setLineWidth(0.5);
       doc.line(margin, 46, pageWidth - margin, 46);
-      
+
       // 2. Letter Content Setup
       doc.setFont("times", "normal"); // High-end serif font for cover letter text
       doc.setFontSize(11.5);
       doc.setTextColor(51, 65, 85); // slate-700
-      
+
       const paragraphs = coverLetter.split('\n');
       let y = 60; // Starting Y coordinate for text
       const lineHeight = 7;
       const paragraphSpacing = 10;
-      
+
       paragraphs.forEach((para: string) => {
         const text = para.trim();
         if (text) {
@@ -424,27 +499,27 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
           y += paragraphSpacing;
         }
       });
-      
+
       // 3. Premium Footer / Sign-off
       if (y > 240) {
         doc.addPage();
         y = 30;
       }
-      
+
       doc.setDrawColor(241, 245, 249); // slate-100
       doc.line(margin, y, pageWidth - margin, y);
       y += 12;
-      
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(15, 23, 42); // slate-900
       doc.text("Best Regards,", margin, y);
-      
+
       y += 6;
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139); // slate-500
       doc.text("Candidate via RGJobs", margin, y);
-      
+
       // Save PDF
       doc.save(`${job?.role?.replace(/\s+/g, '_')}_Cover_Letter_RGJobs.pdf`);
       setToastMessage({ msg: 'PDF Downloaded successfully!', type: 'success' });
@@ -459,13 +534,13 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
   const downloadAsWord = () => {
     setIsDownloading('word');
     try {
-      const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
-            "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-            "xmlns='http://www.w3.org/TR/REC-html40'>"+
-            "<head><meta charset='utf-8'><title>Cover Letter</title></head><body>";
+      const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+        "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+        "xmlns='http://www.w3.org/TR/REC-html40'>" +
+        "<head><meta charset='utf-8'><title>Cover Letter</title></head><body>";
       const footer = "</body></html>";
       const sourceHTML = header + coverLetter?.split('\n').map(p => `<p>${p}</p>`).join('') + footer;
-      
+
       const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
       const fileDownload = document.createElement("a");
       document.body.appendChild(fileDownload);
@@ -574,7 +649,13 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
 
   const parseDescription = (text: string) => {
     if (!text) return [];
-    return text.split('\n').filter(line => line.trim());
+    
+    // If it's a single contiguous block but uses bullet characters, split by bullet
+    if (!text.includes('\n') && text.includes('•')) {
+      return text.split('•').map(line => line.trim()).filter(Boolean);
+    }
+    
+    return text.split('\n').map(line => line.trim().replace(/^•\s*/, '')).filter(Boolean);
   };
 
   if (loading) {
@@ -597,7 +678,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
           </div>
           <h1 className="text-3xl font-black text-white font-playfair mb-4">Position Unavailable</h1>
           <p className="text-slate-400 mb-8 leading-relaxed">This opportunity is no longer active or the link is broken. Discover thousands of other premium roles waiting for you.</p>
-          <button 
+          <button
             onClick={() => router.push('/')}
             className="w-full py-4 bg-white text-slate-900 rounded-xl font-black transition-all hover:bg-slate-200"
           >
@@ -610,6 +691,16 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
 
   const isRemote = job.location?.toLowerCase().includes('remote');
 
+  let applyDomain = "";
+  if (job?.joblink) {
+    try {
+      const url = new URL(job.joblink);
+      applyDomain = url.hostname.replace("www.", "");
+    } catch (e) {
+      applyDomain = "";
+    }
+  }
+
   return (
     <div className="w-full min-h-screen bg-slate-50 font-sora relative">
       <AnimatePresence>
@@ -618,16 +709,16 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
 
       {/* Dark Premium Hero Section */}
       <div className="w-full bg-slate-950 text-white relative pt-[90px] pb-32 overflow-hidden border-b border-slate-800">
-        
+
         {/* Background Gradients */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(37,99,235,0.15),transparent_50%)]" />
         <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-        
+
         <div className="max-w-[1200px] mx-auto px-6 relative z-10">
-          
+
           {/* Breadcrumbs */}
           <div className="flex items-center gap-4 mb-16">
-            <button 
+            <button
               onClick={() => router.back()}
               className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all backdrop-blur-sm"
             >
@@ -642,14 +733,14 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
             </div>
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="flex flex-col md:flex-row md:items-end justify-between gap-8"
           >
             <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-              
+
               {/* Premium Logo Frame */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-500" />
@@ -666,9 +757,15 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <h2 className="text-xl md:text-2xl font-bold text-blue-400">{job.title}</h2>
-                  <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-black uppercase tracking-wider rounded-full backdrop-blur-md shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Official Source Verified
-                  </span>
+                  {applyDomain ? (
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-black uppercase tracking-wider rounded-full backdrop-blur-md shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Sourced from {applyDomain}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-black uppercase tracking-wider rounded-full backdrop-blur-md shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Direct Apply Source
+                    </span>
+                  )}
                   {job.featured && (
                     <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[11px] font-black uppercase tracking-wider rounded-full backdrop-blur-md">
                       <Sparkles className="w-3 h-3" /> Promoted
@@ -678,7 +775,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                 <h1 className="text-4xl md:text-5xl font-black font-playfair tracking-tight mb-6 leading-tight">
                   {job.role}
                 </h1>
-                
+
                 {/* Hero Tags */}
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-[14px] font-medium text-slate-300 backdrop-blur-md">
@@ -707,11 +804,10 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
               </button>
               <button
                 onClick={handleSaveJob}
-                className={`w-12 h-12 flex items-center justify-center border rounded-2xl transition-all backdrop-blur-md ${
-                  isSaved 
-                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' 
+                className={`w-12 h-12 flex items-center justify-center border rounded-2xl transition-all backdrop-blur-md ${isSaved
+                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
                     : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                }`}
+                  }`}
                 title="Save for later"
               >
                 <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-blue-400' : ''}`} />
@@ -724,10 +820,10 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       {/* Main Content Area */}
       <div className="max-w-[1200px] mx-auto px-6 -mt-10 relative z-20 pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Left Column (Details) */}
           <div className="lg:col-span-2 flex flex-col gap-8">
-            
+
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-white border border-slate-200 rounded-[1.5rem] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-blue-200 transition-colors">
@@ -746,16 +842,16 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
               </div>
               <div className="bg-white border border-slate-200 rounded-[1.5rem] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-blue-200 transition-colors col-span-2 lg:col-span-1">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
-                  <Users className="w-5 h-5" />
+                  <Shield className="w-5 h-5" />
                 </div>
-                <div className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Applicants</div>
-                <div className="text-lg font-black text-slate-900">High Demand</div>
+                <div className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Apply Route</div>
+                <div className="text-lg font-black text-slate-900">100% Direct</div>
               </div>
             </div>
 
             {/* Core Description blocks */}
             <div className="bg-white border border-slate-200 rounded-[2rem] p-8 md:p-12 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-              
+
               {job.description && (
                 <div className="mb-12 last:mb-0">
                   <h3 className="text-xl font-black text-slate-900 font-playfair mb-6 flex items-center gap-3">
@@ -816,18 +912,18 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                 </div>
               )}
 
-              {/* Job Sourcing & Verification Transparency Shield */}
+              {/* Platform Sourcing & Redirection Transparency Shield */}
               <div className="mt-12 pt-8 border-t border-slate-100 last:mb-0">
                 <div className="rounded-[2rem] bg-emerald-500/[0.03] border border-emerald-500/10 p-6 md:p-8 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/[0.02] rounded-full blur-2xl pointer-events-none" />
-                  
+
                   <div className="flex items-center gap-3.5 mb-6 relative z-10">
                     <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0 shadow-sm">
                       <Shield className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-base font-black text-slate-900 uppercase tracking-wide">RGJobs Verification Shield</h4>
-                      <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">100% Secure & Authentic Career Sourcing</p>
+                      <h4 className="text-base font-black text-slate-900 uppercase tracking-wide">RGJobs Sourcing Transparency</h4>
+                      <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Direct & Secure Recruitment Redirection</p>
                     </div>
                   </div>
 
@@ -835,9 +931,9 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[13px] font-bold text-slate-950 block mb-0.5">Verified Official Career Source</span>
+                        <span className="text-[13px] font-bold text-slate-950 block mb-0.5">Automated ATS Sourcing</span>
                         <span className="text-[11px] text-slate-600 leading-relaxed font-medium block">
-                          Aggregated directly from the official career subdomain of <strong>{job.title}</strong> (e.g. Workday, Greenhouse, Lever, or official corporate page). No third-party job board clones or affiliate loops.
+                          This job opening is aggregated directly from the public web at <strong>{applyDomain || 'the employer\'s careers page'}</strong>. We dynamically inspect all redirection targets to ensure they map to official applicant tracking systems (e.g. Greenhouse, Lever, Workday) and bypass spam loops.
                         </span>
                       </div>
                     </div>
@@ -845,9 +941,9 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[13px] font-bold text-slate-950 block mb-0.5">Active Entity Legal Review</span>
+                        <span className="text-[13px] font-bold text-slate-950 block mb-0.5">Curation & Expiry Filters</span>
                         <span className="text-[11px] text-slate-600 leading-relaxed font-medium block">
-                          Our team verified that <strong>{job.title}</strong> is a registered active tech corporation with verified employee presence on professional directories.
+                          Our algorithms index fresh, open tech roles in India and remote. While we filter out duplicates and closed listings, we highly recommend verifying that the role is still actively accepting applicants once you land on the company's page.
                         </span>
                       </div>
                     </div>
@@ -855,9 +951,9 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                     <div className="flex items-start gap-3 md:col-span-2 border-t border-slate-100 pt-5">
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[13px] font-bold text-slate-950 block mb-0.5">100% Direct Application Redirection</span>
+                        <span className="text-[13px] font-bold text-slate-950 block mb-0.5">100% Direct-to-Recruiter Process</span>
                         <span className="text-[11px] text-slate-600 leading-relaxed font-medium block">
-                          When you click apply, you are sent directly to the employer's official recruitment scanner. RGJobs <strong>never intercepts, reads, stores, or sells your resume or personal application data</strong>.
+                          Clicking apply redirects you directly to <strong>{job.title}</strong>'s internal career portal. RGJobs is a discovery aggregator; we <strong>never intercept, read, store, or sell your resume or personal application details</strong>.
                         </span>
                       </div>
                     </div>
@@ -866,16 +962,17 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
               </div>
 
             </div>
+
           </div>
 
           {/* Right Sidebar (Sticky Tracker) */}
           <div className="lg:col-span-1">
             <div className="sticky top-32 flex flex-col gap-6">
-              
+
               {/* Premium AI Match Card */}
               <div className="bg-slate-950 border border-slate-800 rounded-[2rem] p-8 shadow-xl relative overflow-hidden group">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(139,92,246,0.15),transparent_50%)] pointer-events-none" />
-                
+
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-5 h-5 text-purple-400" />
@@ -887,8 +984,33 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                     )}
                   </div>
 
-                  {requiresUpgrade ? (
-                    <motion.div 
+                  {matchLoading ? (
+                    <div className="w-full mt-2 bg-slate-950 border border-slate-800/80 rounded-2xl p-5 font-mono text-[11px] text-emerald-400 text-left space-y-2.5 shadow-inner h-[245px] overflow-hidden flex flex-col justify-start">
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-1 shrink-0">
+                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[8px] font-sans">RGJobs AI Term v2.1</span>
+                        <span className="flex items-center gap-1.5 text-rose-500 text-[9px] font-sans font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> PROCESSING
+                        </span>
+                      </div>
+                      <div className="flex-1 space-y-2.5 overflow-y-auto pr-1">
+                        {terminalLogs.map((log, i) => (
+                          <div key={i} className="flex items-start gap-2 leading-relaxed animate-fade-in">
+                            <span className="text-slate-600 select-none shrink-0">$</span>
+                            <span className={i === terminalLogs.length - 1 ? "text-emerald-300 font-bold" : "text-slate-400"}>
+                              {log}
+                            </span>
+                          </div>
+                        ))}
+                        {terminalLogs.length < 7 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-600 select-none">$</span>
+                            <span className="w-1.5 h-3.5 bg-emerald-400 animate-pulse inline-block" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : requiresUpgrade ? (
+                    <motion.div
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       className="flex flex-col items-center mt-2 w-full"
@@ -900,7 +1022,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       <p className="text-[13px] font-medium text-slate-400 mb-6 leading-relaxed">
                         You've used your 6 free AI matches. Upgrade to PRO to get unlimited insights and bypass the ATS filters.
                       </p>
-                      <button 
+                      <button
                         onClick={() => router.push('/pro')}
                         className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl font-bold tracking-wide transition-all shadow-[0_8px_20px_rgba(139,92,246,0.25)] hover:shadow-[0_12px_25px_rgba(139,92,246,0.4)]"
                       >
@@ -908,7 +1030,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       </button>
                     </motion.div>
                   ) : matchScore !== null ? (
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       className="flex flex-col items-center"
@@ -917,23 +1039,23 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       <div className="relative w-32 h-32 mb-6 flex items-center justify-center">
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                           <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" className="text-slate-800" strokeWidth="8" />
-                          <motion.circle 
+                          <motion.circle
                             initial={{ strokeDashoffset: 283 }}
                             animate={{ strokeDashoffset: 283 - (283 * matchScore) / 100 }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
-                            cx="50" cy="50" r="45" fill="none" 
-                            stroke="currentColor" 
-                            className={matchScore >= 80 ? "text-emerald-500" : matchScore >= 50 ? "text-amber-500" : "text-rose-500"} 
-                            strokeWidth="8" 
-                            strokeDasharray="283" 
-                            strokeLinecap="round" 
+                            cx="50" cy="50" r="45" fill="none"
+                            stroke="currentColor"
+                            className={matchScore >= 80 ? "text-emerald-500" : matchScore >= 50 ? "text-amber-500" : "text-rose-500"}
+                            strokeWidth="8"
+                            strokeDasharray="283"
+                            strokeLinecap="round"
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center flex-col">
                           <span className="text-3xl font-black text-white">{matchScore}%</span>
                         </div>
                       </div>
-                      
+
                       <p className="text-[13px] font-medium text-slate-300 leading-relaxed bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md">
                         {matchFeedback}
                       </p>
@@ -953,11 +1075,11 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                           {isPro && (
                             <div className="mt-3 space-y-2">
                               {[
-                                { key: 'technical_skills',     label: 'Technical',  max: 40 },
+                                { key: 'technical_skills', label: 'Technical', max: 40 },
                                 { key: 'experience_relevance', label: 'Experience', max: 25 },
-                                { key: 'soft_skills',          label: 'Soft Skills',max: 15 },
-                                { key: 'education',            label: 'Education',  max: 10 },
-                                { key: 'keyword_match',        label: 'Keywords',   max: 10 },
+                                { key: 'soft_skills', label: 'Soft Skills', max: 15 },
+                                { key: 'education', label: 'Education', max: 10 },
+                                { key: 'keyword_match', label: 'Keywords', max: 10 },
                               ].map(item => {
                                 const val = scoreBreakdown[item.key] ?? 0;
                                 const pct = Math.round((val / item.max) * 100);
@@ -990,7 +1112,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       )}
 
                       {coverLetter && (
-                        <button 
+                        <button
                           onClick={() => setShowCoverLetter(true)}
                           className="w-full mt-6 flex items-center justify-center gap-2 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all border border-white/5"
                         >
@@ -999,7 +1121,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       )}
 
                       {optimizedProfile && (
-                        <button 
+                        <button
                           onClick={() => setShowOptimizerModal(true)}
                           className="w-full mt-3 flex items-center justify-center gap-2 py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl font-bold transition-all border border-emerald-500/20"
                         >
@@ -1068,19 +1190,14 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Refresh Button */}
                       <div className="w-full mt-6 pt-6 border-t border-slate-800">
                         <button
                           onClick={() => calculateAIMatch(true, true)}
-                          disabled={matchLoading}
-                          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-xl font-semibold text-[13px] transition-all disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-xl font-semibold text-[13px] transition-all"
                         >
-                          {matchLoading ? (
-                            <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-white animate-spin" />
-                          ) : (
-                            <><RefreshCw className="w-4 h-4" /> Updated Profile? Re-Analyze</>
-                          )}
+                          <RefreshCw className="w-4 h-4" /> Updated Profile? Re-Analyze
                         </button>
                       </div>
                     </motion.div>
@@ -1089,16 +1206,11 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       <p className="text-[13px] font-medium text-slate-400 mb-6 leading-relaxed">
                         Find out instantly if you are a good fit for this role using our advanced AI analysis.
                       </p>
-                      <button 
+                      <button
                         onClick={calculateAIMatch}
-                        disabled={matchLoading}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold tracking-wide transition-all disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold tracking-wide transition-all"
                       >
-                        {matchLoading ? (
-                          <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                        ) : (
-                          <>Analyze Profile</>
-                        )}
+                        Analyze Profile
                       </button>
                     </>
                   )}
@@ -1108,24 +1220,91 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
               {/* Premium Apply Card */}
               <div className="bg-white border-2 border-blue-600 rounded-[2rem] p-1 shadow-[0_20px_40px_rgba(37,99,235,0.1)] relative overflow-hidden group">
                 <div className="absolute inset-0 bg-blue-600 opacity-5 group-hover:opacity-10 transition-opacity duration-300" />
-                
+
                 <div className="bg-white rounded-[1.8rem] p-8 relative z-10 h-full flex flex-col">
                   <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
                     <Zap className="w-6 h-6 fill-blue-600/20" />
                   </div>
-                  
+
                   <h3 className="text-2xl font-black text-slate-900 font-playfair mb-2">Ready to Apply?</h3>
                   <p className="text-[14px] font-medium text-slate-500 mb-8 leading-relaxed">
                     Submit your application seamlessly through the official portal. Make sure your resume is up to date!
                   </p>
 
-                  <button 
+                  <button
                     onClick={handleApply}
                     className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black tracking-wide shadow-[0_8px_20px_rgba(37,99,235,0.3)] hover:shadow-[0_12px_25px_rgba(37,99,235,0.4)] transition-all hover:-translate-y-1 active:translate-y-0"
                   >
                     Apply on Company Site
                     <ExternalLink className="w-4 h-4 ml-1" />
                   </button>
+
+                  {/* ── Track This Application — AI Services Entry Point ── */}
+                  <div className="mt-5 pt-5 border-t border-slate-100">
+                    {!isTracked ? (
+                      <button
+                        onClick={async () => {
+                          const token = localStorage.getItem('token');
+                          if (!token) {
+                            setShowLoginModal(true);
+                            return;
+                          }
+                          setTrackingLoading(true);
+                          try {
+                            const res = await axios.post(
+                              `${backendURL}/api/tracker`,
+                              {
+                                company_name: job.title || 'Company',
+                                job_title: job.role || job.category || 'Role',
+                                job_description: job.description?.replace(/<[^>]*>/g, ' ').substring(0, 3000) || '',
+                                job_url: job.joblink || '',
+                                status: 'applied',
+                                applied_at: new Date().toISOString().split('T')[0]
+                              },
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            if (res.data.success) {
+                              setIsTracked(true);
+                              setToastMessage({ msg: 'Added to your Application Tracker!', type: 'success' });
+                            }
+                          } catch (err: any) {
+                            if (err.response?.status === 402) {
+                              setToastMessage({ msg: 'Free tier limit reached (10 jobs). Upgrade to PRO for unlimited tracking.', type: 'info' });
+                            } else {
+                              setToastMessage({ msg: 'Could not track — please try again.', type: 'info' });
+                            }
+                          } finally {
+                            setTrackingLoading(false);
+                          }
+                        }}
+                        disabled={trackingLoading}
+                        className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[14px] transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {trackingLoading ? (
+                          <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        ) : (
+                          <>
+                            <Target className="w-4 h-4 text-rose-400" />
+                            Track This Application
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <Link
+                        href="/candidate-dashboard/tracker"
+                        className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-[14px] transition-all"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        Tracked — View Dashboard
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    )}
+                    <div className="mt-3 flex flex-col gap-1.5">
+                      <p className="text-[11px] text-slate-400 font-semibold text-center leading-relaxed">
+                        Track to unlock <strong className="text-slate-600">AI Follow-up Scripts</strong>, <strong className="text-slate-600">Mock Interview Prep</strong>, and <strong className="text-slate-600">Rejection Diagnosis</strong>
+                      </p>
+                    </div>
+                  </div>
 
                   {(() => {
                     let applyDomain = "";
@@ -1151,36 +1330,19 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                 </div>
               </div>
 
-              {/* Similar Alert / Minimal Stats */}
-              <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-8 hidden md:block">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Job Summary</h3>
-                <div className="space-y-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium text-sm">Role</span>
-                    <span className="font-bold text-slate-900 truncate max-w-[120px]">{job.role}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium text-sm">Type</span>
-                    <span className="font-bold text-slate-900">{job.jobtype === '1' ? 'Intern' : 'Full-Time'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium text-sm">Company</span>
-                    <span className="font-bold text-slate-900 truncate max-w-[120px]">{job.title}</span>
-                  </div>
-                </div>
-              </div>
+
 
             </div>
           </div>
 
         </div>
       </div>
-      
+
       {/* Login / Complete Profile Modal */}
       <AnimatePresence>
         {showLoginModal && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1197,13 +1359,13 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                 Please log in and complete your full profile to get the best results from our AI Analysis. A complete profile ensures highly accurate match scores and tailored insights!
               </p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setShowLoginModal(false)}
                   className="flex-1 py-3 px-4 rounded-xl border border-slate-700 text-white font-medium hover:bg-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={() => router.push('/login')}
                   className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors shadow-lg shadow-blue-500/25"
                 >
@@ -1219,7 +1381,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       <AnimatePresence>
         {showProfileAlert && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1233,12 +1395,12 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
               </div>
               <h3 className="text-2xl font-bold text-white mb-3">Incomplete Profile</h3>
               <p className="text-slate-400 mb-6 leading-relaxed">
-                Your profile is only <strong>{profileCompletion}% complete</strong>. The AI Engine requires a highly detailed profile (Bio, Skills, Location, etc.) to give you the best ATS Match Score and Resume optimizations. 
+                Your profile is only <strong>{profileCompletion}% complete</strong>. The AI Engine requires a highly detailed profile (Bio, Skills, Location, etc.) to give you the best ATS Match Score and Resume optimizations.
                 <br /><br />
                 If you proceed now, you might waste a credit on poor results. We highly recommend completing your profile first.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <button 
+                <button
                   onClick={() => {
                     setShowProfileAlert(false);
                     calculateAIMatch(true);
@@ -1247,7 +1409,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                 >
                   Proceed Anyway
                 </button>
-                <button 
+                <button
                   onClick={() => router.push('/candidate-dashboard/settings')}
                   className="flex-[1.5] py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold transition-colors shadow-lg shadow-amber-500/20 text-[14px]"
                 >
@@ -1263,15 +1425,15 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
       <AnimatePresence>
         {showCoverLetter && coverLetter && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
               onClick={() => setShowCoverLetter(false)}
             />
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1306,8 +1468,8 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                     <h4 className="text-2xl font-black text-slate-900 mb-1 tracking-tight">COVER LETTER</h4>
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Generated via RGJobs AI</p>
                   </div>
-                  
-                  {coverLetter.split('\n').map((para, i) => 
+
+                  {coverLetter.split('\n').map((para, i) =>
                     para.trim() && <p key={i} className="text-justify">{para}</p>
                   )}
 
@@ -1320,7 +1482,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
 
               {/* Action Footer */}
               <div className="p-6 md:p-8 border-t border-white/5 bg-slate-950/80 shrink-0 flex flex-col sm:flex-row gap-4 items-center">
-                <button 
+                <button
                   onClick={() => {
                     navigator.clipboard.writeText(coverLetter);
                     setToastMessage({ msg: 'Cover Letter copied to clipboard!', type: 'success' });
@@ -1330,7 +1492,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                   <FileText className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" /> Copy
                 </button>
 
-                <button 
+                <button
                   onClick={downloadAsWord}
                   disabled={!!isDownloading}
                   className="w-full sm:flex-[1.5] py-4 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-2xl font-bold transition-all border border-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
@@ -1343,7 +1505,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                   Download .DOC
                 </button>
 
-                <button 
+                <button
                   onClick={downloadAsPDF}
                   disabled={!!isDownloading}
                   className="w-full sm:flex-[2] py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-2xl font-black transition-all shadow-[0_10px_30px_rgba(139,92,246,0.2)] hover:shadow-[0_15px_40px_rgba(139,92,246,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"

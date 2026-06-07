@@ -82,9 +82,34 @@ export default function Jobcard(props: any) {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
+    
     const saved = localStorage.getItem(`savedJobs_${userId}`);
     if (saved) {
       setSavedJobs(JSON.parse(saved));
+    }
+
+    if (token && user?.id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/saved-jobs`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setSavedJobs(data.saved_job_ids);
+          localStorage.setItem(`savedJobs_${userId}`, JSON.stringify(data.saved_job_ids));
+          
+          const detailsMap: Record<string, any> = {};
+          data.saved_jobs.forEach((j: any) => {
+            detailsMap[String(j.id)] = j;
+          });
+          localStorage.setItem(`savedJobsDetails_${userId}`, JSON.stringify(detailsMap));
+        }
+      })
+      .catch(err => console.error('Failed to sync saved jobs from database:', err));
     }
   }, []);
 
@@ -199,6 +224,7 @@ export default function Jobcard(props: any) {
   const toggleSaveJob = (post: any) => {
     const user = JSON.parse(localStorage.getItem('candidate') || 'null');
     const userId = user?.id || 'anonymous';
+    const token = localStorage.getItem('token');
     const savedKey = `savedJobs_${userId}`;
     const detailsKey = `savedJobsDetails_${userId}`;
 
@@ -224,6 +250,19 @@ export default function Jobcard(props: any) {
         };
       }
       localStorage.setItem(detailsKey, JSON.stringify(details));
+
+      // Sync with backend database in background
+      if (token && user?.id) {
+        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/jobs/${jobId}/save`;
+        fetch(url, {
+          method: isSaved ? 'DELETE' : 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        })
+        .catch(err => console.error('Failed to sync save state to backend database:', err));
+      }
 
       setToastMessage({
         msg: isSaved ? 'Job removed from saved' : 'Job saved securely!',

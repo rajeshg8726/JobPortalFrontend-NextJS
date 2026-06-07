@@ -29,7 +29,7 @@ export default function ProPricing() {
   const handleUpgrade = async (packageType: 'PRO' | 'TOPUP' = 'PRO') => {
     setIsProcessing(true);
     setPurchasedPack(packageType);
-    
+
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
       setShowLoginModal(true);
@@ -46,7 +46,7 @@ export default function ProPricing() {
     }
 
     try {
-      const orderRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/payments/create-order`, { 
+      const orderRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/payments/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,18 +54,18 @@ export default function ProPricing() {
         },
         body: JSON.stringify({ package_type: packageType })
       });
-      
+
       if (!orderRes.ok) {
         throw new Error('Failed to create order');
       }
 
       const orderData = await orderRes.json();
-      
+
       const userStr = localStorage.getItem('candidate') || localStorage.getItem('employer');
       const user = userStr ? JSON.parse(userStr) : {};
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: "INR",
         name: packageType === 'TOPUP' ? "RGJobs Credits" : "RGJobs PRO",
@@ -85,17 +85,17 @@ export default function ProPricing() {
                 razorpay_signature: response.razorpay_signature
               })
             });
-            
+
             if (verifyRes.ok) {
               setPaymentStatus('success');
               if (userStr) {
-                 const updatedUser = { 
-                   ...user, 
-                   is_pro: packageType === 'PRO' ? true : user.is_pro,
-                   ai_credits: packageType === 'TOPUP' ? (user.ai_credits || 0) + 10 : user.ai_credits
-                 };
-                 const userType = localStorage.getItem('userType');
-                 localStorage.setItem(userType === 'Candidate' ? 'candidate' : 'employer', JSON.stringify(updatedUser));
+                const updatedUser = {
+                  ...user,
+                  is_pro: packageType === 'PRO' ? true : user.is_pro,
+                  ai_credits: packageType === 'TOPUP' ? (user.ai_credits || 0) + 10 : user.ai_credits
+                };
+                const userType = localStorage.getItem('userType');
+                localStorage.setItem(userType === 'Candidate' ? 'candidate' : 'employer', JSON.stringify(updatedUser));
               }
             } else {
               setPaymentStatus('failed');
@@ -118,7 +118,7 @@ export default function ProPricing() {
       };
 
       const paymentObject = new (window as any).Razorpay(options);
-      
+
       paymentObject.on('payment.failed', function (response: any) {
         console.error(response.error);
         setPaymentStatus('failed');
@@ -137,12 +137,12 @@ export default function ProPricing() {
 
   return (
     <div className="min-h-screen bg-slate-950 font-sora selection:bg-purple-500/30 selection:text-purple-200">
-      
+
       {/* Login Required Modal */}
       <AnimatePresence>
         {showLoginModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -159,13 +159,13 @@ export default function ProPricing() {
                 You need to create an account or log in before you can upgrade to RGJobs PRO and unlock premium features.
               </p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setShowLoginModal(false)}
                   className="flex-1 py-3 px-4 rounded-xl border border-slate-700 text-white font-medium hover:bg-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={() => router.push('/login')}
                   className="flex-1 py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors shadow-lg shadow-purple-500/25"
                 >
@@ -181,7 +181,7 @@ export default function ProPricing() {
       <AnimatePresence>
         {paymentStatus && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -194,20 +194,20 @@ export default function ProPricing() {
                   <X className="w-10 h-10 text-rose-500" />
                 )}
               </div>
-              
+
               <h3 className="text-2xl font-bold text-white mb-3">
                 {paymentStatus === 'success' ? 'Payment Successful!' : 'Payment Failed'}
               </h3>
-              
+
               <p className="text-slate-400 mb-8 leading-relaxed">
-                {paymentStatus === 'success' 
-                  ? (purchasedPack === 'TOPUP' 
-                      ? '10 AI Match credits loaded successfully! You can now analyze fresh opportunities.' 
-                      : 'Welcome to RGJobs PRO! Your account has been upgraded and you now have access to all premium features.')
+                {paymentStatus === 'success'
+                  ? (purchasedPack === 'TOPUP'
+                    ? '10 AI Match credits loaded successfully! You can now analyze fresh opportunities.'
+                    : 'Welcome to RGJobs PRO! Your account has been upgraded and you now have access to all premium features.')
                   : paymentErrorMsg}
               </p>
-              
-              <button 
+
+              <button
                 onClick={() => {
                   setPaymentStatus(null);
                   if (paymentStatus === 'success') {
@@ -232,10 +232,10 @@ export default function ProPricing() {
       </div>
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6 pt-32 pb-24">
-        
+
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-bold tracking-wide uppercase mb-6"
@@ -243,8 +243,8 @@ export default function ProPricing() {
             <Sparkles className="w-4 h-4" />
             Beat the ATS Algorithms
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -255,23 +255,23 @@ export default function ProPricing() {
               Get the insider advantage.
             </span>
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-lg text-slate-400 leading-relaxed font-medium"
           >
-            90% of resumes are rejected by HR robots before a human even sees them. 
+            90% of resumes are rejected by HR robots before a human even sees them.
             RGJobs PRO tells you exactly what the employer wants to see so you can land your dream job faster.
           </motion.p>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
-          
+
           {/* Free Tier */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -280,7 +280,7 @@ export default function ProPricing() {
             <div>
               <h3 className="text-xl font-black text-white mb-1.5">Basic Candidate</h3>
               <p className="text-slate-400 text-xs font-medium mb-6">Explore the market and test our AI matching tools.</p>
-              
+
               <div className="flex items-end gap-1.5 mb-6">
                 <span className="text-4xl font-black text-white">Free</span>
                 <span className="text-slate-500 text-xs font-medium mb-1">forever</span>
@@ -306,8 +306,15 @@ export default function ProPricing() {
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-slate-300 text-sm font-medium block">Weekly credit refresh</span>
-                    <span className="text-[10px] text-slate-500 font-medium">Lazy refreshes +1 credit every week (max 6)</span>
+                    <span className="text-slate-300 text-sm font-medium block">1x First Job Profile Match (Free)</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Analyze your first target role for 0 credits</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-300 text-sm font-medium block">1x First Resume Health Scan (Free)</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Standalone ATS parse audit across 6 dimensions</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -320,8 +327,15 @@ export default function ProPricing() {
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-slate-300 text-sm font-medium block">First Match Free</span>
-                    <span className="text-[10px] text-slate-500 font-medium">Your very first profile analysis costs 0 credits</span>
+                    <span className="text-slate-300 text-sm font-medium block">5 Active Job Tracking Slots</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Log and track up to 5 jobs on your Kanban dashboard</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-300 text-sm font-medium block">Weekly credit refresh</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Lazy refreshes +1 credit every week (max 6)</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -330,13 +344,13 @@ export default function ProPricing() {
                 </div>
                 <div className="flex items-start gap-2.5">
                   <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
-                  <span className="text-slate-600 text-sm font-medium line-through">AI Cover Letter Vector PDF Download</span>
+                  <span className="text-slate-600 text-sm font-medium line-through">Premium Cover Letter PDF/DOC Downloads</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <button 
+              <button
                 onClick={() => router.push('/login')}
                 className="w-full py-3.5 rounded-xl border border-slate-800 hover:border-slate-700 text-slate-300 font-bold hover:bg-slate-900 transition-colors text-sm"
               >
@@ -349,7 +363,7 @@ export default function ProPricing() {
           </motion.div>
 
           {/* Micro Top-Up Pack Tier (NEW) */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
@@ -365,7 +379,7 @@ export default function ProPricing() {
                 <Target className="w-5 h-5 text-emerald-400" /> 10 Credits Top-Up
               </h3>
               <p className="text-slate-400 text-xs font-medium mb-6">Perfect if you only need a quick boost on high-priority applications.</p>
-              
+
               <div className="flex items-end gap-1.5 mb-2">
                 <span className="text-4xl font-black text-white">₹29</span>
                 <span className="text-slate-500 text-xs font-medium mb-1">/ one-time buy</span>
@@ -378,40 +392,43 @@ export default function ProPricing() {
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-slate-200 text-sm font-bold block mb-0.5">+10 AI Match Scores</span>
-                    <span className="text-[10px] text-slate-400">Instantly loads 10 credits onto your current balance.</span>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">+10 AI Match Credits (No Expiry)</span>
+                    <span className="text-[10px] text-slate-400">Loaded instantly onto your balance. Use them when you want.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-slate-200 text-sm font-bold block mb-0.5">Custom ATS Keyword Check</span>
-                    <span className="text-[10px] text-slate-400">See all missing critical keywords for target roles.</span>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">Resume Health Re-Audits</span>
+                    <span className="text-[10px] text-slate-400">Re-run full standalone ATS parser checks after updating your resume.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-slate-200 text-sm font-bold block mb-0.5">Cover Letter Generator</span>
-                    <span className="text-[10px] text-slate-400">Generate and copy personalized custom cover letters.</span>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">ATS Technical Keyword Match</span>
+                    <span className="text-[10px] text-slate-400">Extract matching parameters and critical keyword lists.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-slate-200 text-sm font-bold block mb-0.5">STAR-Interview prep & Salary benchmarking</span>
-                    <span className="text-[10px] text-slate-400">Unlock custom interview sets and local salary indicators.</span>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">Custom Cover Letter Draft</span>
+                    <span className="text-[10px] text-slate-400">Generate copyable tailored cover letters for target roles.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
-                  <span className="text-slate-600 text-sm font-medium line-through">Unlimited Matching (Capped at 10)</span>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-slate-200 text-sm font-bold block mb-0.5">10 Active Job Tracking Slots</span>
+                    <span className="text-[10px] text-slate-400">Increase your Kanban job tracker capacity to 10 active jobs automatically.</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <button 
+              <button
                 onClick={() => handleUpgrade('TOPUP')}
                 disabled={isProcessing}
                 className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all text-sm shadow-lg shadow-emerald-600/10 hover:shadow-emerald-600/25 flex items-center justify-center gap-2"
@@ -432,7 +449,7 @@ export default function ProPricing() {
           </motion.div>
 
           {/* PRO Tier */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -448,7 +465,7 @@ export default function ProPricing() {
                 <Zap className="w-5 h-5 text-purple-400 fill-purple-400/20" /> RGJobs PRO
               </h3>
               <p className="text-purple-200/70 text-xs font-medium mb-6">Stop applying blindly. Get the ultimate unlimited AI advantage and bypass HR filters.</p>
-              
+
               <div className="flex items-end gap-1.5 mb-2">
                 <span className="text-4xl font-black text-white">₹199</span>
                 <span className="text-purple-200/50 text-xs font-medium mb-1">/ 30 Days</span>
@@ -462,35 +479,42 @@ export default function ProPricing() {
                   <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                   <div>
                     <span className="text-white font-bold text-sm block mb-0.5">100% Unlimited AI Match Scores</span>
-                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">No limits or caps. Run matching percentage checks against any number of jobs.</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Run as many role-matching and technical scans as you want, zero quota stress.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-white font-bold text-sm block mb-0.5">Cover Letter PDF & DOC Download</span>
-                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Generate, customize and download print-ready vector PDF or Microsoft Word DOC cover letters.</span>
+                    <span className="text-white font-bold text-sm block mb-0.5">100% Unlimited Resume Health Checks</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Audit your resume's ATS health metrics as many times as you like.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-white font-bold text-sm block mb-0.5">AI Resume Bio Optimizer</span>
-                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Let the AI rewrite your settings bio to incorporate high-impact ATS keywords automatically.</span>
+                    <span className="text-white font-bold text-sm block mb-0.5">Premium Cover Letter PDF & DOC Downloads</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Generate, refine and download print-ready vector PDF or editable Word .DOC files directly.</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-white font-bold text-sm block mb-0.5">STAR Prep Kit & Local Salary Benchmarks</span>
-                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Get custom interview prep sheets and realistic local salary benchmarks in INR.</span>
+                    <span className="text-white font-bold text-sm block mb-0.5">AI Resume Bio Optimizer (Full Copy)</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Full access to copy and paste optimized bios with technical keywords pre-injected.</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-white font-bold text-sm block mb-0.5">Unlimited Application Tracking (Kanban Tracker)</span>
+                    <span className="text-[10px] text-purple-200/60 leading-relaxed block">Exceed the 5-job free and 10-job top-up limits with fully unlocked, infinite active tracking.</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <button 
+              <button
                 onClick={() => handleUpgrade('PRO')}
                 disabled={isProcessing}
                 className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black text-sm transition-all shadow-[0_8px_25px_rgba(139,92,246,0.25)] hover:shadow-[0_12px_30px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
@@ -516,7 +540,7 @@ export default function ProPricing() {
         {/* Competitive Comparison Grid */}
         <div className="max-w-[1000px] mx-auto mt-32 mb-16">
           <div className="text-center mb-16">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -546,7 +570,7 @@ export default function ProPricing() {
                 {[
                   {
                     feature: "Automated PDF Resume Parser",
-                    us: { check: true, text: "Yes (Gemini-Powered)" },
+                    us: { check: true, text: "Yes (Gemini/Groq-Powered)" },
                     linkedin: { check: false, text: "No (Bio form only)" },
                     jobscan: { check: true, text: "Yes" },
                     chatgpt: { check: false, text: "No (Manual paste)" }
@@ -703,46 +727,49 @@ export default function ProPricing() {
           </div>
         </div>
 
-        {/* A/B Testing Success Analytics / Case Studies */}
+        {/* Why ATS Optimization Matters — Industry Facts, Not Our Claims */}
         <div className="max-w-[1000px] mx-auto mt-32 mb-16">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-wider uppercase mb-4">
-              Real Outcome Data
+              Industry Reality
             </div>
             <h3 className="text-3xl md:text-4xl font-black text-white font-playfair tracking-tight mb-4">
-              Proven Outcomes, Not Prompt Wrappers
+              Why ATS Optimization Matters
             </h3>
             <p className="text-slate-400 font-medium max-w-2xl mx-auto text-lg">
-              We tracked the job search results of 1,200+ entry-level tech candidates in India. The results show that smart, keyword-targeted application matches outperform basic applications by massive margins.
+              These are well-documented industry statistics — not our claims. Understanding them is the first step to fixing your job search.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900/30 border border-slate-800 rounded-[2rem] p-8 text-center backdrop-blur-sm relative overflow-hidden group hover:border-emerald-500/30 transition-all">
               <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
-              <div className="text-5xl font-black text-white mb-2 group-hover:text-emerald-400 transition-colors">89.4%</div>
-              <div className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">Resume Screen Success</div>
+              <div className="text-5xl font-black text-white mb-2 group-hover:text-emerald-400 transition-colors">75%</div>
+              <div className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">Resumes Auto-Rejected</div>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Candidates with high AI match scores (80%+) consistently pass initial automated employer ATS filters.
+                Industry research shows that up to 75% of resumes are filtered out by ATS software before a human recruiter ever sees them.
               </p>
+              <p className="text-[10px] text-slate-600 mt-3 font-medium">Source: Harvard Business School, 2021</p>
             </div>
 
             <div className="bg-slate-900/30 border border-slate-800 rounded-[2rem] p-8 text-center backdrop-blur-sm relative overflow-hidden group hover:border-blue-500/30 transition-all">
               <div className="absolute top-0 left-0 w-full h-1 bg-blue-500" />
-              <div className="text-5xl font-black text-white mb-2 group-hover:text-blue-400 transition-colors">3.4x</div>
-              <div className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">More Interview Invites</div>
+              <div className="text-5xl font-black text-white mb-2 group-hover:text-blue-400 transition-colors">98%</div>
+              <div className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">Fortune 500 Use ATS</div>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Applying directly to official career pages with customized cover letters yielded 3.4 times higher response rates.
+                Nearly all large companies — and increasingly mid-size firms — use Applicant Tracking Systems to screen resumes before human review.
               </p>
+              <p className="text-[10px] text-slate-600 mt-3 font-medium">Source: Jobscan Industry Report</p>
             </div>
 
             <div className="bg-slate-900/30 border border-slate-800 rounded-[2rem] p-8 text-center backdrop-blur-sm relative overflow-hidden group hover:border-purple-500/30 transition-all">
               <div className="absolute top-0 left-0 w-full h-1 bg-purple-500" />
-              <div className="text-5xl font-black text-white mb-2 group-hover:text-purple-400 transition-colors">14 Days</div>
-              <div className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">Average Callback Speed</div>
+              <div className="text-5xl font-black text-white mb-2 group-hover:text-purple-400 transition-colors">6 sec</div>
+              <div className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">Average Recruiter Scan</div>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Zero middleman queues mean employers review applications directly in their company dashboards, accelerating interviews.
+                Even after passing ATS, recruiters spend an average of just 6-7 seconds reviewing each resume. The right keywords make those seconds count.
               </p>
+              <p className="text-[10px] text-slate-600 mt-3 font-medium">Source: Ladders Eye-Tracking Study</p>
             </div>
           </div>
         </div>
@@ -890,7 +917,7 @@ export default function ProPricing() {
               }
             ].map((faq, i) => (
               <div key={i} className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm transition-all hover:border-slate-700">
-                <button 
+                <button
                   onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                   className="w-full px-6 py-5 flex items-center justify-between text-left"
                 >
