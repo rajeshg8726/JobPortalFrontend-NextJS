@@ -23,6 +23,11 @@ type AppUser = {
   profile_image?: string; userType?: string;
   profile_completeness?: number;
   resume?: string;
+  ai_credits: number;
+  is_first_resume_health_free_used: boolean;
+  application_tracker_count?: number;
+  job_matches_count?: number;
+  is_pro: boolean;
 };
 
 export default function AdminUsersPage() {
@@ -180,7 +185,7 @@ export default function AdminUsersPage() {
             <table className="w-full text-left text-[13px] min-w-[720px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {['User', 'Contact', 'Location', 'Profile', 'Joined', 'Status', 'Action'].map(h => (
+                  {['User', 'Contact', 'Location', 'Profile', 'Usage & Credits', 'Joined', 'Status', 'Action'].map(h => (
                     <th key={h} className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[11px] first:pl-6">
                       {h}
                     </th>
@@ -266,6 +271,40 @@ export default function AdminUsersPage() {
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
+                    </td>
+
+                    {/* Usage & Credits */}
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col gap-1 text-[12px]">
+                        <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                          <span className={`w-2 h-2 rounded-full ${user.is_pro ? 'bg-indigo-500 animate-pulse' : 'bg-emerald-500'}`} />
+                          <span>
+                            {user.is_pro ? (
+                              <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px] uppercase font-extrabold">PRO Plan</span>
+                            ) : (
+                              `${user.ai_credits ?? 0} Credits Left`
+                            )}
+                          </span>
+                        </div>
+                        {tab === 'candidate' && (
+                          <div className="flex flex-col gap-0.5 text-slate-500 font-medium mt-1">
+                            <div className="flex items-center justify-between gap-4">
+                              <span>Kanban Tracker:</span>
+                              <span className="font-bold text-slate-755">{user.application_tracker_count ?? 0} cards</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                              <span>AI Matches:</span>
+                              <span className="font-bold text-slate-755">{user.job_matches_count ?? 0} matches</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                              <span>Resume Health:</span>
+                              <span className={`font-bold ${user.is_first_resume_health_free_used ? 'text-indigo-650' : 'text-slate-400'}`}>
+                                {user.is_first_resume_health_free_used ? 'Analyzed' : 'Not Used'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Joined */}

@@ -301,7 +301,10 @@ export default function ProPricing() {
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                  <span className="text-slate-300 text-sm font-medium">6 Starting AI Match Credits</span>
+                  <div>
+                    <span className="text-slate-300 text-sm font-medium block">3 Starting AI Match Credits</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Use them carefully on your top-priority roles</span>
+                  </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
@@ -332,11 +335,8 @@ export default function ProPricing() {
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-slate-300 text-sm font-medium block">Weekly credit refresh</span>
-                    <span className="text-[10px] text-slate-500 font-medium">Lazy refreshes +1 credit every week (max 6)</span>
-                  </div>
+                  <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
+                  <span className="text-slate-600 text-sm font-medium line-through">Weekly credit refresh</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <X className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />

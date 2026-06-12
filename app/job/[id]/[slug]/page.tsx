@@ -3,13 +3,19 @@ import axios from "axios";
 import { Metadata } from "next";
 import JobDetailClient from "./JobDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 // 1. Generate SEO Metadata precisely matching the original react-helmet-async setup
 export async function generateMetadata({ params }: any): Promise<Metadata> {
   const resolvedParams = await params;
-  const backendURL = process.env.NEXT_PUBLIC_API_URL;
+  const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   try {
-    const res = await axios.get(`${backendURL}/api/job/${resolvedParams.id}`);
-    const job = res.data.job || res.data;
+    const res = await fetch(`${backendURL}/api/job/${resolvedParams.id}`, {
+      next: { revalidate: 86400 }
+    });
+    if (!res.ok) throw new Error('Failed to fetch job');
+    const data = await res.json();
+    const job = data.job || data;
     
     return {
       title: `${job.role} at ${job.title} - Apply Now | RGJobs`,
@@ -40,8 +46,12 @@ export default async function JobPage({ params }: any) {
   let jobData = null;
 
   try {
-    const res = await axios.get(`${backendURL}/api/job/${resolvedParams.id}`);
-    jobData = res.data.job || res.data;
+    const res = await fetch(`${backendURL}/api/job/${resolvedParams.id}`, {
+      next: { revalidate: 86400 }
+    });
+    if (!res.ok) throw new Error('Failed to fetch job');
+    const data = await res.json();
+    jobData = data.job || data;
   } catch (err) {
     console.error("Error fetching job on server", err);
   }

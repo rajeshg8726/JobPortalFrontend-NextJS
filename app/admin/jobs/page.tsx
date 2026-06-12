@@ -29,7 +29,7 @@ export default function AdminJobsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [page,      setPage]      = useState(1);
   const [search,    setSearch]    = useState('');
-  const [filter,    setFilter]    = useState<'all' | 'featured' | 'urgent' | 'old'>('all');
+  const [filter,    setFilter]    = useState<'all' | 'featured' | 'urgent' | 'old' | 'old_60'>('all');
   const [activeTab, setActiveTab] = useState<'all' | 'published' | 'draft'>('all');
   const [loading,   setLoading]   = useState(true);
   const [toggling,  setToggling]  = useState<Record<string, boolean>>({});
@@ -224,7 +224,7 @@ export default function AdminJobsPage() {
         </div>
 
         <div className="flex items-center gap-2 p-1 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto no-scrollbar">
-          {(['all', 'featured', 'urgent', 'old'] as const).map(f => (
+          {(['all', 'featured', 'urgent', 'old', 'old_60'] as const).map(f => (
             <button
               key={f}
               onClick={() => { setFilter(f); setPage(1); }}
@@ -237,7 +237,8 @@ export default function AdminJobsPage() {
               {f === 'featured' && <Star className="w-3.5 h-3.5" />}
               {f === 'urgent'   && <Clock className="w-3.5 h-3.5" />}
               {f === 'old'      && <Clock className="w-3.5 h-3.5 text-rose-500" />}
-              {f === 'all' ? 'All Jobs' : f === 'old' ? 'Older than 30 Days' : f}
+              {f === 'old_60'   && <Clock className="w-3.5 h-3.5 text-rose-600" />}
+              {f === 'all' ? 'All Jobs' : f === 'old' ? 'Older than 30 Days' : f === 'old_60' ? 'Older than 60 Days' : f}
             </button>
           ))}
           </div>

@@ -375,9 +375,24 @@ function DimensionCard({
             className="overflow-hidden"
           >
             <div className="pt-4 mt-3 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                {data.feedback}
-              </p>
+              {data.feedback.includes('[Locked for PRO users') ? (
+                <div className="relative group overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+                  <div className="p-4 blur-[4px] opacity-60">
+                    <p className="text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                      This is a placeholder for the detailed feedback that will analyze your specific resume section and provide actionable recommendations. It will point out exact phrases to change and suggest ATS-friendly alternatives based on your experience.
+                    </p>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-100/40 dark:bg-slate-900/40 transition-colors">
+                    <Link href="/pro" className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-[13px] font-bold bg-white dark:bg-slate-900 px-4 py-2 rounded-full border border-indigo-200 dark:border-indigo-500/30 shadow-sm hover:shadow-md transition-all">
+                      <Lock className="w-3.5 h-3.5" /> Unlock Detailed Feedback
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                  {data.feedback}
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -838,41 +853,51 @@ export default function ResumeHealthClient() {
                       <p className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Download a beautiful score card or share it to your socials.</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
+                      {!isPro ? (
+                        <Link
+                          href="/pro"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white/10 hover:bg-slate-800 dark:hover:bg-white/20 text-indigo-400 font-bold text-[13px] transition-all shadow-md"
+                        >
+                          <Lock className="w-4 h-4" />
+                          PRO: Download Card
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={handleDownloadCard}
+                          disabled={isGeneratingCard}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white/10 hover:bg-slate-800 dark:hover:bg-white/20 text-white font-bold text-[13px] transition-all disabled:opacity-50 shadow-md"
+                        >
+                          {isGeneratingCard ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                          Download Card
+                        </button>
+                      )}
                       <button
-                        onClick={handleDownloadCard}
-                        disabled={isGeneratingCard}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white/10 hover:bg-slate-800 dark:hover:bg-white/20 text-white font-bold text-[13px] transition-all disabled:opacity-50 shadow-md"
+                        onClick={() => { if (!isPro) return; handleShareCard('linkedin'); }}
+                        disabled={isGeneratingCard || !isPro}
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-[13px] transition-all shadow-md ${!isPro ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                       >
-                        {isGeneratingCard ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Download className="w-4 h-4" />
-                        )}
-                        Download Card
-                      </button>
-                      <button
-                        onClick={() => handleShareCard('linkedin')}
-                        disabled={isGeneratingCard}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-[13px] transition-all disabled:opacity-50 shadow-md"
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        {!isPro ? <Lock className="w-4 h-4" /> : <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>}
                         LinkedIn
                       </button>
                       <button
-                        onClick={() => handleShareCard('twitter')}
-                        disabled={isGeneratingCard}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-black text-white font-bold text-[13px] transition-all disabled:opacity-50 shadow-md"
+                        onClick={() => { if (!isPro) return; handleShareCard('twitter'); }}
+                        disabled={isGeneratingCard || !isPro}
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-black text-white font-bold text-[13px] transition-all shadow-md ${!isPro ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        {!isPro ? <Lock className="w-4 h-4" /> : <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>}
                         Post
                       </button>
                       {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
                         <button
-                          onClick={() => handleShareCard('native')}
-                          disabled={isGeneratingCard}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-white font-bold text-[13px] transition-all disabled:opacity-50"
+                          onClick={() => { if (!isPro) return; handleShareCard('native'); }}
+                          disabled={isGeneratingCard || !isPro}
+                          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-white font-bold text-[13px] transition-all disabled:opacity-50 ${!isPro ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <Share2 className="w-4 h-4" />
+                          {!isPro ? <Lock className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                           More
                         </button>
                       )}

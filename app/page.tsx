@@ -4,12 +4,12 @@ async function fetchInitialJobs() {
   const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   try {
     let res = await fetch(`${backendURL}/api/getAllJobs`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 86400 },
     });
     if (!res.ok) {
       // Fallback endpoint if the primary one isn't available
       res = await fetch(`${backendURL}/api/jobs-search`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 86400 },
       });
     }
     const data = await res.json();

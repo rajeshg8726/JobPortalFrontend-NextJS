@@ -50,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let jobPages: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(`${backendURL}/api/getAllJobs`, {
-      next: { revalidate: 3600 }, // Regenerate sitemap every hour
+      next: { revalidate: 86400 }, // Regenerate sitemap every 24 hours
     });
     if (res.ok) {
       const data = await res.json();

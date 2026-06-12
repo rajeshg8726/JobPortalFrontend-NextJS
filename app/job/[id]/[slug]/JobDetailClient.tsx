@@ -1020,7 +1020,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       </div>
                       <h4 className="text-xl font-black text-white mb-2">Out of Free Matches</h4>
                       <p className="text-[13px] font-medium text-slate-400 mb-6 leading-relaxed">
-                        You've used your 6 free AI matches. Upgrade to PRO to get unlimited insights and bypass the ATS filters.
+                        You've used your free AI matches. Upgrade to PRO to get unlimited insights and bypass the ATS filters.
                       </p>
                       <button
                         onClick={() => router.push('/pro')}
@@ -1112,21 +1112,47 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       )}
 
                       {coverLetter && (
-                        <button
-                          onClick={() => setShowCoverLetter(true)}
-                          className="w-full mt-6 flex items-center justify-center gap-2 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all border border-white/5"
-                        >
-                          <FileText className="w-4 h-4 text-purple-400" /> View AI Cover Letter
-                        </button>
+                        isPro ? (
+                          <button
+                            onClick={() => setShowCoverLetter(true)}
+                            className="w-full mt-6 flex items-center justify-center gap-2 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all border border-white/5"
+                          >
+                            <FileText className="w-4 h-4 text-purple-400" /> View AI Cover Letter
+                          </button>
+                        ) : (
+                          <div className="w-full mt-6 relative group overflow-hidden rounded-xl border border-white/5 bg-white/5">
+                            <div className="p-4 blur-[3px] opacity-60">
+                              <p className="text-white text-xs font-mono leading-relaxed">{coverLetter}</p>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 transition-colors">
+                              <span className="flex items-center gap-2 text-purple-400 text-[13px] font-bold bg-slate-900 px-4 py-2 rounded-full border border-purple-500/30">
+                                <Lock className="w-3.5 h-3.5" /> PRO: Full Cover Letter
+                              </span>
+                            </div>
+                          </div>
+                        )
                       )}
 
                       {optimizedProfile && (
-                        <button
-                          onClick={() => setShowOptimizerModal(true)}
-                          className="w-full mt-3 flex items-center justify-center gap-2 py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl font-bold transition-all border border-emerald-500/20"
-                        >
-                          <UserRoundPen className="w-4 h-4" /> AI Resume Optimizer
-                        </button>
+                        isPro ? (
+                          <button
+                            onClick={() => setShowOptimizerModal(true)}
+                            className="w-full mt-3 flex items-center justify-center gap-2 py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl font-bold transition-all border border-emerald-500/20"
+                          >
+                            <UserRoundPen className="w-4 h-4" /> AI Resume Optimizer
+                          </button>
+                        ) : (
+                          <div className="w-full mt-3 relative group overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+                            <div className="p-4 blur-[3px] opacity-60">
+                              <p className="text-emerald-400 text-xs font-mono leading-relaxed">Paragraph 1: Current role and top 2-3 strengths matching the JD...</p>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 transition-colors">
+                              <span className="flex items-center gap-2 text-emerald-400 text-[13px] font-bold bg-slate-900 px-4 py-2 rounded-full border border-emerald-500/30">
+                                <Lock className="w-3.5 h-3.5" /> PRO: Profile Optimizer
+                              </span>
+                            </div>
+                          </div>
+                        )
                       )}
 
                       {/* Salary Benchmark */}
@@ -1137,11 +1163,15 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                           </h5>
                           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4">
                             <div className="text-2xl font-black text-white mb-1">
-                              ₹{(salaryBenchmark.min / 100000).toFixed(1)}L – ₹{(salaryBenchmark.max / 100000).toFixed(1)}L
+                              {isPro ? `₹${(salaryBenchmark.min / 100000).toFixed(1)}L – ₹${(salaryBenchmark.max / 100000).toFixed(1)}L` : '₹?.?L – ₹?.?L'}
                               <span className="text-xs font-medium text-slate-400 ml-1">/ year</span>
                             </div>
-                            {salaryBenchmark.advice && (
-                              <p className="text-[12px] text-emerald-300/80 font-medium leading-relaxed mt-2">{salaryBenchmark.advice}</p>
+                            {isPro ? (
+                              salaryBenchmark.advice && (
+                                <p className="text-[12px] text-emerald-300/80 font-medium leading-relaxed mt-2">{salaryBenchmark.advice}</p>
+                              )
+                            ) : (
+                              <p className="text-[12px] text-emerald-400 font-bold leading-relaxed mt-2 flex items-center gap-1.5"><Lock className="w-3 h-3" /> Locked for PRO users. Upgrade to see salary data and negotiation advice.</p>
                             )}
                           </div>
                         </div>
@@ -1154,19 +1184,21 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                             <h5 className="text-[12px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
                               <MessageSquare className="w-3.5 h-3.5" /> Likely Interview Questions
                             </h5>
-                            <button
-                              onClick={downloadInterviewPDF}
-                              disabled={isDownloading === 'interview-pdf'}
-                              title="Download Interview Prep as PDF"
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50"
-                            >
-                              {isDownloading === 'interview-pdf' ? (
-                                <div className="w-3 h-3 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
-                              ) : (
-                                <Download className="w-3 h-3" />
-                              )}
-                              PDF
-                            </button>
+                            {isPro && (
+                              <button
+                                onClick={downloadInterviewPDF}
+                                disabled={isDownloading === 'interview-pdf'}
+                                title="Download Interview Prep as PDF"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50"
+                              >
+                                {isDownloading === 'interview-pdf' ? (
+                                  <div className="w-3 h-3 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                                ) : (
+                                  <Download className="w-3 h-3" />
+                                )}
+                                PDF
+                              </button>
+                            )}
                           </div>
                           <div className="flex flex-col gap-2">
                             {interviewQuestions.map((q: string, i: number) => (
@@ -1187,7 +1219,44 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                                 )}
                               </div>
                             ))}
+                            {!isPro && (
+                              <div className="relative mt-2">
+                                {[4, 5, 6].map(i => (
+                                  <div key={i} className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-4 py-3 mb-2 blur-[2px] opacity-50 flex items-center justify-between">
+                                    <span className="text-[12px] font-semibold text-blue-200 leading-snug flex-1">{i}. [Locked Premium Question]</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                                  </div>
+                                ))}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center mt-2">
+                                  <span className="flex items-center gap-2 text-blue-400 text-[13px] font-bold bg-slate-900 px-4 py-2 rounded-full border border-blue-500/30">
+                                    <Lock className="w-3.5 h-3.5" /> Unlock 7 more questions with PRO
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
+                        </div>
+                      )}
+
+                      {!isPro && (
+                        <div className="w-full mt-8 bg-gradient-to-b from-slate-800/40 to-slate-900/80 border border-indigo-500/30 p-6 rounded-2xl relative overflow-hidden">
+                          <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 blur-[50px] rounded-full pointer-events-none" />
+                          <h4 className="text-white font-black text-lg mb-2 relative z-10 flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-400" /> You've used your free AI match.</h4>
+                          <p className="text-sm text-slate-300 font-medium mb-4 relative z-10">Here's what we found: Your Score, Feedback, and Strengths are all visible above.</p>
+                          
+                          <p className="text-[13px] text-indigo-200/80 mb-6 relative z-10 leading-relaxed font-semibold">
+                            Want the full package? Cover letter, all 10 interview questions, salary insights, and optimized LinkedIn bio are available with PRO.
+                          </p>
+
+                          <div className="flex flex-col sm:flex-row gap-3 relative z-10">
+                            <Link href="/pro" className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-xl text-center text-sm shadow-lg transition-all flex justify-center items-center gap-2">
+                              Upgrade to PRO — ₹199/month
+                            </Link>
+                            <Link href="/pro" className="flex-1 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold py-3 px-4 rounded-xl text-center text-sm transition-all flex justify-center items-center">
+                              Buy 10 Credits — ₹29
+                            </Link>
+                          </div>
+                          <p className="text-center text-[11px] text-slate-400 mt-4 font-medium relative z-10">Not ready? No problem. Your results above are yours to keep.</p>
                         </div>
                       )}
 

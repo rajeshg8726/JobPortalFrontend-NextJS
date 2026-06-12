@@ -1,7 +1,7 @@
 import React from 'react';
 import JobsBrowser from '../../components/JobsBrowser';
 
-
+export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ type: string }> }) {
   const resolvedParams = await params;
   let decodedType = decodeURIComponent(resolvedParams.type).replace(/-/g, ' ');
