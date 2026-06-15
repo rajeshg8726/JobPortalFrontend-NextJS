@@ -7,7 +7,7 @@ import axios from 'axios';
 import {
   Bookmark, Eye, ChevronRight, Building2,
   MapPin, Clock, ExternalLink, Briefcase, Sparkles, Activity, Zap, Shield,
-  WifiOff, RefreshCw, Target, Award, FileText, LayoutDashboard, CheckSquare
+  WifiOff, RefreshCw, Target, Award, FileText, LayoutDashboard, CheckSquare, AlertTriangle
 } from 'lucide-react';
 
 function calcCompletion(profile: any): number {
@@ -31,6 +31,8 @@ export default function CandidateDashboardPage() {
   const [aiMatches, setAiMatches] = useState<any[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
   const [matchesError, setMatchesError] = useState(false);
+  const [latestResumeHealth, setLatestResumeHealth] = useState<any>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
   
   // Live Kanban stage metrics
   const [trackerCounts, setTrackerCounts] = useState({
@@ -115,8 +117,28 @@ export default function CandidateDashboardPage() {
       }
     };
 
+    const fetchLatestHealth = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setHealthLoading(false);
+        return;
+      }
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/candidate/resume-health/latest`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success && res.data.data) {
+          setLatestResumeHealth(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load latest resume health', err);
+      }
+      setHealthLoading(false);
+    };
+
     fetchMatches();
     fetchTrackerStats();
+    fetchLatestHealth();
   }, []);
 
   const completion = calcCompletion(profile);
@@ -373,56 +395,103 @@ export default function CandidateDashboardPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] text-left relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
             
-            <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-4 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> Resume Health Score
-            </span>
-            
-            <div className="flex items-center gap-5 mb-5">
-              {/* CircularSVG Gauge */}
-              <div className="relative w-18 h-18 shrink-0 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="7" />
-                  <motion.circle 
-                    initial={{ strokeDashoffset: 264 }}
-                    animate={{ strokeDashoffset: 264 - (264 * completion) / 100 }}
-                    transition={{ duration: 1.2 }}
-                    cx="50" cy="50" r="42" fill="none" 
-                    stroke={completion >= 80 ? "#10b981" : "#3b82f6"} 
-                    strokeWidth="7" 
-                    strokeDasharray="264" 
-                    strokeLinecap="round" 
-                  />
-                </svg>
-                <span className="absolute text-lg font-black text-slate-900 dark:text-white">{completion}%</span>
-              </div>
-              
-              <div>
-                <h4 className="font-black text-slate-900 dark:text-white leading-tight">ATS Parse Density</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">
-                  {completion >= 80 ? "Your resume has high structural parse integrity." : "Complete skills and experiences to boost crawl rating."}
-                </p>
-              </div>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5" /> Resume Health Score
+              </span>
+              {latestResumeHealth && (
+                <span className="text-[9px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-100 dark:border-slate-700">
+                  Last Scanned
+                </span>
+              )}
             </div>
 
-            {/* Checklist items */}
-            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-4 text-xs font-bold text-slate-600 dark:text-slate-400">
-              <div className="flex justify-between">
-                <span>File Format Readable</span>
-                <span className={profile?.resume ? 'text-emerald-500' : 'text-rose-500'}>{profile?.resume ? 'YES' : 'MISSING'}</span>
+            {healthLoading ? (
+              <div className="flex flex-col items-center justify-center py-10">
+                <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <span className="text-xs text-slate-400 font-bold">Loading Score...</span>
               </div>
-              <div className="flex justify-between">
-                <span>Structure Standardized</span>
-                <span className={completion >= 50 ? 'text-emerald-500' : 'text-amber-500'}>{completion >= 50 ? 'YES' : 'LOW DENSITY'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Contact info parsed</span>
-                <span className={profile?.phone ? 'text-emerald-500' : 'text-rose-500'}>{profile?.phone ? 'YES' : 'MISSING'}</span>
-              </div>
-            </div>
+            ) : latestResumeHealth ? (
+              <>
+                <div className="flex items-center gap-5 mb-5">
+                  {/* Real Score Gauge */}
+                  <div className="relative w-18 h-18 shrink-0 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="7" />
+                      <motion.circle 
+                        initial={{ strokeDashoffset: 264 }}
+                        animate={{ strokeDashoffset: 264 - (264 * Math.round((latestResumeHealth.overall_score / 60) * 100)) / 100 }}
+                        transition={{ duration: 1.2 }}
+                        cx="50" cy="50" r="42" fill="none" 
+                        stroke={Math.round((latestResumeHealth.overall_score / 60) * 100) >= 75 ? "#10b981" : Math.round((latestResumeHealth.overall_score / 60) * 100) >= 50 ? "#f59e0b" : "#f43f5e"} 
+                        strokeWidth="7" 
+                        strokeDasharray="264" 
+                        strokeLinecap="round" 
+                      />
+                    </svg>
+                    <span className="absolute text-lg font-black text-slate-900 dark:text-white">
+                      {Math.round((latestResumeHealth.overall_score / 60) * 100)}%
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-black text-slate-900 dark:text-white leading-tight">
+                      {Math.round((latestResumeHealth.overall_score / 60) * 100) >= 75 ? "Excellent Match" : Math.round((latestResumeHealth.overall_score / 60) * 100) >= 50 ? "Needs Improvement" : "Critical Fixes Needed"}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-semibold line-clamp-2">
+                      {latestResumeHealth.summary !== '[Locked for PRO users]' ? latestResumeHealth.summary : "Unlock full analysis with PRO."}
+                    </p>
+                  </div>
+                </div>
 
-            <Link href="/resume-health" className="w-full py-3.5 bg-slate-900 hover:bg-slate-850 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 mt-5">
-              <Activity className="w-4 h-4" /> Re-scan ATS PDF
-            </Link>
+                {latestResumeHealth.top_fixes && latestResumeHealth.top_fixes.length > 0 && (
+                  <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-4 mb-5">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Top Fixes Needed</span>
+                    {latestResumeHealth.top_fixes.slice(0, 2).map((fix: string, idx: number) => (
+                      <div key={idx} className="flex gap-2 items-start">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 line-clamp-2 leading-snug">{fix}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Link href="/resume-health" className="flex-1 py-3 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-xs font-black rounded-xl transition-all shadow-sm flex items-center justify-center border border-rose-100 dark:border-rose-500/20">
+                    Full Report
+                  </Link>
+                  <Link href="/resume-health?action=rescan" className="flex-1 py-3 bg-slate-900 hover:bg-slate-850 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
+                    <RefreshCw className="w-3.5 h-3.5" /> 
+                    {profile?.is_pro ? "Re-scan" : "Re-scan (-1 ⚡)"}
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-5 mb-5">
+                  <div className="relative w-18 h-18 shrink-0 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700">
+                    <Activity className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 dark:text-white leading-tight">No Scan Found</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-semibold leading-relaxed">
+                      Find out if your resume is getting auto-rejected by ATS bots.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-4 text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-5">
+                  <div className="flex gap-2 items-center"><CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> Checks ATS Parseability</div>
+                  <div className="flex gap-2 items-center"><CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> Checks Keyword Density</div>
+                  <div className="flex gap-2 items-center"><CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> Identifies Missing Skills</div>
+                </div>
+
+                <Link href="/resume-health" className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
+                  <Sparkles className="w-4 h-4" /> 
+                  {profile?.is_pro || !profile?.is_first_resume_health_free_used ? "Analyze Resume — Free" : "Analyze Resume (-1 ⚡)"}
+                </Link>
+              </>
+            )}
           </div>
 
           {/* B. Glowing Credits & Refill B2C Balance Card */}

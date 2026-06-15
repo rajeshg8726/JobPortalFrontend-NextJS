@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Briefcase, Users2, LogOut,
-  Menu, X, Shield, ChevronRight, MessageSquare, Sparkles, Terminal
+  Menu, X, Shield, ChevronRight, MessageSquare, Sparkles, Terminal, FileText
 } from 'lucide-react';
 
 const NAV = [
   { label: 'Overview',              href: '/admin',                 exact: true,  icon: LayoutDashboard },
   { label: 'Job Management',        href: '/admin/jobs',            exact: false, icon: Briefcase },
   { label: 'User Management',       href: '/admin/users',           exact: false, icon: Users2 },
+  { label: 'Resume Tracker',        href: '/admin/resume-tracker',  exact: false, icon: FileText },
   { label: 'Subscription & AI Log', href: '/admin/subscription-ai',  exact: false, icon: Sparkles },
   { label: 'Communications',        href: '/admin/communications',  exact: false, icon: MessageSquare },
   { label: 'System Logs',           href: '/admin/logs',            exact: false, icon: Terminal },

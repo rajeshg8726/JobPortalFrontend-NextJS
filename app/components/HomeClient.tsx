@@ -104,7 +104,7 @@ export default function HomeClient({ initialJobs }: { initialJobs: any[] }) {
               transition={{ delay: 0.2 }}
               className="text-slate-400 font-medium text-base md:text-lg"
             >
-              Traditional job portals sell candidate databases to third parties. We build elite utility tools to ensure your resume bypasses automated screening filters.
+              Legacy career platforms sell candidate databases to third parties. We build elite utility tools to ensure your resume bypasses automated screening filters.
             </motion.p>
           </div>
 
@@ -198,7 +198,7 @@ export default function HomeClient({ initialJobs }: { initialJobs: any[] }) {
                   Our Anti-Spam & Trust Manifesto
                 </h3>
                 <p className="text-slate-400 text-xs font-semibold leading-relaxed">
-                  Most job aggregators act as data brokers, harvesting your phone numbers and selling them to educational consultants. We are a pure utility software platform funded strictly by premium consumer tools subscriptions.
+                  Conventional recruitment networks act as data brokers, harvesting your phone numbers and selling them to educational consultants. We are a pure utility software platform funded strictly by premium consumer tools subscriptions.
                 </p>
               </div>
 

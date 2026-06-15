@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ role: str
   const capitalized = decodedRole.replace(/\b\w/g, l => l.toUpperCase());
   return {
     title: `${capitalized} Jobs | RGJobs`,
-    description: `Browse all curated opportunities for ${capitalized} professionals.`
+    description: `Unlock AI-analyzed ATS insights and direct pipelines for ${capitalized} professionals.`
   };
 }
 

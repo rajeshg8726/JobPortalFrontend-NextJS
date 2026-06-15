@@ -436,8 +436,20 @@ export default function ResumeHealthClient() {
       } catch (err) {
         console.error("Failed to parse cached candidate profile:", err);
       }
+
+      // Fetch latest report
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') !== 'rescan') {
+        axios.get(`${backendURL}/api/candidate/resume-health/latest`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(res => {
+          if (res.data.success && res.data.data) {
+            setResult(res.data.data);
+          }
+        }).catch(err => console.error("Failed to fetch latest health check", err));
+      }
     }
-  }, []);
+  }, [backendURL]);
 
   const runAnalysis = async () => {
     const token = localStorage.getItem("token");

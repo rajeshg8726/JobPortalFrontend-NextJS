@@ -82,7 +82,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="text-lg font-black text-slate-900 mb-2">Complete Transparency</h3>
                     <p className="text-slate-600 text-[15px] font-medium leading-relaxed">
-                      RGJobs is a <strong>job aggregator</strong>. We index fresh listings directly from official company career pages — Swiggy, Razorpay, Flipkart, Amazon, and hundreds more. When you click &quot;Apply&quot;, you go directly to their official career page. We never collect your application data or act as a middleman. What we <em>add</em> on top is AI-powered resume analysis that shows you exactly how well you match a job and what keywords you&apos;re missing.
+                      RGJobs is an <strong>AI Career Intelligence Platform</strong>. We index fresh listings directly from official company career pages — Swiggy, Razorpay, Flipkart, Amazon, and hundreds more. When you click &quot;Apply&quot;, you go directly to their official career page. We never collect your application data or act as a middleman. What we <em>add</em> on top is AI-powered resume analysis that shows you exactly how well you match a job and what keywords you&apos;re missing.
                     </p>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export default function AboutPage() {
               {
                 icon: Zap,
                 title: "Free to Start",
-                description: "Every user gets 6 free AI credits. No credit card required. Try the product, see the value, then decide if PRO is worth it. We earn trust first.",
+                description: "Every user gets 3 free AI credits. No credit card required. Try the product, see the value, then decide if PRO is worth it. We earn trust first.",
                 color: "bg-amber-50 text-amber-600 border-amber-100"
               },
               {
@@ -176,7 +176,7 @@ export default function AboutPage() {
                 {[
                   "I will never show fake reviews or inflated numbers",
                   "I will never lock your data behind a paywall",
-                  "I will always be transparent about what RGJobs is (an aggregator + AI tools)",
+                  "I will always be transparent about what RGJobs is (an opportunity pipeline + AI tools)",
                   "I will keep improving this product based on real user feedback",
                   "If PRO doesn't find at least 3 missing keywords, you get a full refund"
                 ].map((promise, i) => (

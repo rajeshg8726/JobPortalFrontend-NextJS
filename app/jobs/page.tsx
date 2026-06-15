@@ -4,7 +4,7 @@ import JobsBrowser from '../components/JobsBrowser';
 
 export const metadata = {
   title: 'All IT Jobs | RGJobs',
-  description: 'Browse the latest software, management, and tech jobs curated for developers, freshers, and professionals.',
+  description: 'Access our live Opportunity Radar for curated tech and management roles, analyzed by AI for your ATS compatibility.',
 };
 
 export default async function JobsPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {

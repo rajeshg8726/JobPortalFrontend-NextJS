@@ -349,7 +349,7 @@ export default function RefundPolicyPage() {
                     <li>Our AI engine will provide genuine, actionable insights — not generic filler content.</li>
                     <li>We will never charge you without your explicit action and consent.</li>
                     <li>We will never sell, share, or misuse your personal data or resume information.</li>
-                    <li>We actively add new job listings daily and remove expired ones to maintain a high-quality, relevant job board.</li>
+                    <li>We actively add new job listings daily and remove expired ones to maintain a high-quality, relevant opportunity database.</li>
                   </ul>
 
                   <div className="p-5 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl mt-4">

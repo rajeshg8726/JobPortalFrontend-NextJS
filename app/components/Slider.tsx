@@ -532,7 +532,7 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
               </div>
               <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">Fix & Optimize</h3>
               <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px] leading-relaxed mb-5">Use AI match scoring to find missing ATS keywords, generate tailored cover letters, and prep for interviews with STAR coaching.</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-black uppercase tracking-wider">✓ 6 Credits Free</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-black uppercase tracking-wider">✓ 3 Credits Free</span>
             </motion.div>
 
             {/* Step 3 */}
@@ -584,7 +584,7 @@ export default function Slider({ setSearchedJobs, setLoading, allJobs }: any) {
             {[
               { icon: "🩺", title: "Resume Health Score", desc: "Upload your resume and instantly see if it's ATS-ready — scored across 6 dimensions with specific fix suggestions. No job description needed.", tag: "New · Free" },
               { icon: "🔍", title: "Opportunity Radar", desc: "Browse live opportunities sourced directly from 890+ official company career pages. Fully searchable and always current.", tag: "Always Free" },
-              { icon: "🤖", title: "6 AI Match Credits", desc: "Every new account gets 6 AI credits to analyze your profile against real job descriptions and get a match score.", tag: "On Signup" },
+              { icon: "🤖", title: "3 AI Match Credits", desc: "Every new account gets 3 AI credits to analyze your profile against real job descriptions. Complete your profile to earn +3 more.", tag: "On Signup" },
               { icon: "✨", title: "First Analysis Free", desc: "Your very first AI match always costs zero credits. Try it completely risk-free before spending anything.", tag: "Zero Risk" },
               { icon: "📋", title: "Application Tracker", desc: "Track up to 5 active applications with a Kanban board. Get AI follow-up scripts, interview prep, and rejection diagnosis.", tag: "5 Apps Free" },
               { icon: "🔒", title: "100% Direct Applications", desc: "Every Apply click takes you to the employer's real career page. We never store or forward your CV or data.", tag: "100% Transparent" },

@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: { params: Promise<{ type: str
   const capitalized = decodedType.replace(/\b\w/g, l => l.toUpperCase());
   return {
     title: `${capitalized} Jobs | RGJobs`,
-    description: `Find top ${capitalized} opportunities curated for you.`
+    description: `Unlock AI-analyzed ATS insights and direct pipelines for ${capitalized} roles.`
   };
 }
 

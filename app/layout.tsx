@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Sora, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import PublicShell from "./components/PublicShell";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,6 +84,7 @@ export default function RootLayout({
           {children}
         </PublicShell>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

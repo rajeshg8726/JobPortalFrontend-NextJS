@@ -4,7 +4,7 @@ import CompaniesBrowser from '../components/CompaniesBrowser';
 
 export const metadata = {
   title: 'Top Companies | RGJobs',
-  description: 'Explore leading tech companies and startups hiring on RGJobs. Discover your next career move by browsing verified employer profiles.',
+  description: 'Analyze employer tech stacks, company cultures, and career trajectories with our enterprise intelligence database.',
 };
 
 export default function CompaniesPage() {

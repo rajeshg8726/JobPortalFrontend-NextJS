@@ -407,7 +407,7 @@ export default function Jobcard(props: any) {
               Stop guessing. Beat the ATS robot.
             </h3>
             <p className="text-slate-300 font-medium leading-relaxed max-w-xl text-[15px] mb-5">
-              Every new user gets <span className="text-emerald-400 font-bold">6 Free AI Credits</span> to analyze jobs instantly. 
+              Every new user gets <span className="text-emerald-400 font-bold">3 Free AI Credits</span> to analyze jobs instantly. 
               We extract missing keywords from your resume and generate highly personalized cover letters to 10x your hiring chances.
             </p>
             <Link 
@@ -420,7 +420,7 @@ export default function Jobcard(props: any) {
           
           <div className="shrink-0 flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
             <div className="text-center">
-              <div className="text-3xl font-black text-white">6</div>
+              <div className="text-3xl font-black text-white">3</div>
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Free Matches</div>
             </div>
             <div className="w-px h-12 bg-white/10" />

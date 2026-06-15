@@ -953,7 +953,7 @@ export default function JobDetailClient({ id, slug, initialJob }: { id: string, 
                       <div>
                         <span className="text-[13px] font-bold text-slate-950 block mb-0.5">100% Direct-to-Recruiter Process</span>
                         <span className="text-[11px] text-slate-600 leading-relaxed font-medium block">
-                          Clicking apply redirects you directly to <strong>{job.title}</strong>'s internal career portal. RGJobs is a discovery aggregator; we <strong>never intercept, read, store, or sell your resume or personal application details</strong>.
+                          Clicking apply redirects you directly to <strong>{job.title}</strong>'s internal career portal. RGJobs is a career intelligence pipeline; we <strong>never intercept, read, store, or sell your resume or personal application details</strong>.
                         </span>
                       </div>
                     </div>

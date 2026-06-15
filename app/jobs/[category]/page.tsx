@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   const decodedCategory = decodeURIComponent(resolvedParams.category).replace(/-/g, ' ');
   return {
     title: `${decodedCategory} | RGJobs`,
-    description: `Browse all curated opportunities for ${decodedCategory}.`
+    description: `Unlock AI-analyzed ATS insights and direct pipelines for ${decodedCategory}.`
   };
 }
 

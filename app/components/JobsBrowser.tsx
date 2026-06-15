@@ -405,7 +405,7 @@ export default function JobsBrowser(props: JobsBrowserProps) {
                 Stop guessing. Beat the ATS robot.
               </h3>
               <p className="text-slate-300 font-medium leading-relaxed max-w-xl text-[15px] mb-5">
-                Every new user gets <span className="text-emerald-400 font-bold">6 Free AI Credits</span> to analyze jobs instantly.
+                Every new user gets <span className="text-emerald-400 font-bold">3 Free AI Credits</span> to analyze jobs instantly.
                 We extract missing keywords from your resume and generate highly personalized cover letters to 10x your hiring chances.
               </p>
               <Link

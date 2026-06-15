@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   Briefcase, Users2, Building2, TrendingUp,
   Clock, MapPin, ArrowRight, Plus, IndianRupee,
-  Sparkles, CheckCircle, Percent, ArrowUpRight
+  Sparkles, CheckCircle, Percent, ArrowUpRight, FileText
 } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -180,6 +180,127 @@ export default function AdminOverviewPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* ── Resume Checker Insights ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col xl:flex-row gap-6 items-center">
+        <div className="flex-1 flex flex-col gap-4 w-full">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-base font-black text-slate-950">Resume Checker Insights</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Checks</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{stats?.resumeTotalChecks ?? 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unique Users</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{stats?.resumeUniqueUsers ?? 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg ATS Score</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{stats?.resumeAvgScore ?? 0}/60</div>
+            </div>
+          </div>
+          <Link
+            href="/admin/resume-tracker"
+            className="flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold text-[12px] rounded-xl transition-all w-full mt-2"
+          >
+            Open Resume Tracker Dashboard <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        
+        <div className="w-full xl:w-80 shrink-0 flex items-center justify-center gap-6 bg-slate-50/50 rounded-2xl p-5 border border-slate-150">
+          {loading ? (
+            <div className="h-28 flex items-center justify-center text-slate-400 text-xs font-semibold">Loading stats…</div>
+          ) : (
+            (() => {
+              const good = stats?.resumeScoreGood ?? 0;
+              const warn = stats?.resumeScoreWarning ?? 0;
+              const poor = stats?.resumeScorePoor ?? 0;
+              const total = good + warn + poor;
+              
+              const pctGood = total > 0 ? Math.round((good / total) * 100) : 0;
+              const pctWarn = total > 0 ? Math.round((warn / total) * 100) : 0;
+              const pctPoor = total > 0 ? Math.round((poor / total) * 100) : 0;
+              
+              return (
+                <>
+                  <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+                    <svg className="w-28 h-28 transform -rotate-90">
+                      <circle cx="56" cy="56" r="44" stroke="#e2e8f0" strokeWidth="8" fill="none" />
+                      
+                      {pctGood > 0 && (
+                        <circle
+                          cx="56"
+                          cy="56"
+                          r="44"
+                          stroke="#10b981"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${(pctGood / 100) * 276.4} 276.4`}
+                        />
+                      )}
+                      {pctWarn > 0 && (
+                        <circle
+                          cx="56"
+                          cy="56"
+                          r="44"
+                          stroke="#f59e0b"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${(pctWarn / 100) * 276.4} 276.4`}
+                          strokeDashoffset={`-${(pctGood / 100) * 276.4}`}
+                        />
+                      )}
+                      {pctPoor > 0 && (
+                        <circle
+                          cx="56"
+                          cy="56"
+                          r="44"
+                          stroke="#ef4444"
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${(pctPoor / 100) * 276.4} 276.4`}
+                          strokeDashoffset={`-${((pctGood + pctWarn) / 100) * 276.4}`}
+                        />
+                      )}
+                    </svg>
+                    <div className="absolute text-center">
+                      <span className="block text-[10px] text-slate-400 font-bold uppercase leading-none">Avg Score</span>
+                      <span className="text-base font-black text-slate-800 leading-none mt-1 block">{stats?.resumeAvgScore ?? 0}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 flex-1 text-[11px] font-bold">
+                    <div className="flex items-center justify-between text-emerald-600">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full shrink-0" />
+                        <span>Good (42+)</span>
+                      </div>
+                      <span>{pctGood}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-amber-600">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 bg-amber-500 rounded-full shrink-0" />
+                        <span>Warn (18-41)</span>
+                      </div>
+                      <span>{pctWarn}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-rose-600">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 bg-rose-500 rounded-full shrink-0" />
+                        <span>Poor (&lt;18)</span>
+                      </div>
+                      <span>{pctPoor}%</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()
+          )}
+        </div>
       </div>
 
       {/* ── Double Activity Feed Split Grid ── */}

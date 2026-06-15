@@ -290,7 +290,7 @@ export default function ProPricing() {
               <div className="flex items-start gap-2 p-3 mb-6 bg-slate-950/40 border border-slate-800 rounded-xl">
                 <Shield className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                  <span className="text-blue-400 font-bold">100% Transparent:</span> We are a job aggregator. All listings redirect you to apply directly on the employer's official website. We never collect or gatekeep applications.
+                  <span className="text-blue-400 font-bold">100% Transparent:</span> We are a discovery engine. All listings redirect you to apply directly on the employer's official website. We never collect or gatekeep applications.
                 </p>
               </div>
 
@@ -909,7 +909,7 @@ export default function ProPricing() {
               },
               {
                 q: "How do the AI Match Score credits work?",
-                a: "Every new account starts with 6 AI Match Credits for free. Your very first analysis always costs 0 credits — it's on us, so you can try before committing. After that, each match uses 1 credit. Credits automatically refresh by +1 every week (capped at 6 total), and you can earn a one-time bonus of +3 credits by completing your profile to 80% or more. When you upgrade to PRO, the credit system is completely bypassed — you get 100% unlimited AI matches, cover letter PDF & DOC downloads, salary benchmarking, and interview prep for the 30-day duration of your pass."
+                a: "Every new account starts with 3 AI Match Credits for free. Your very first analysis always costs 0 credits — it's on us, so you can try before committing. After that, each match uses 1 credit. You can earn a one-time bonus of +3 credits by completing your profile to 80% or more — giving you a total of 6 credits to work with. When you upgrade to PRO, the credit system is completely bypassed — you get 100% unlimited AI matches, cover letter PDF & DOC downloads, salary benchmarking, and interview prep for the 30-day duration of your pass."
               },
               {
                 q: "Do you offer a refund policy?",
